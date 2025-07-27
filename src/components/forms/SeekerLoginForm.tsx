@@ -8,6 +8,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { api } from '@/lib/api';
 import { saveAuthData, decodeJwtPayload } from '@/lib/auth';
 import { toast } from '@/hooks/use-toast';
+import { Search } from 'lucide-react';
 
 export const SeekerLoginForm = () => {
   const navigate = useNavigate();
@@ -79,14 +80,26 @@ export const SeekerLoginForm = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Job Seeker Sign In</CardTitle>
-          <CardDescription>Access your job search dashboard</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center mb-8">
+          <Search className="h-8 w-8 text-blue-600 mr-3" />
+          <button
+            onClick={() => navigate('/')}
+            className="text-2xl font-bold text-gray-900 hover:text-blue-600 transition-colors"
+          >
+            JobHub
+          </button>
+        </div>
+      </div>
+      <div className="flex items-center justify-center py-4 px-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">Job Seeker Sign In</CardTitle>
+            <CardDescription>Access your job search dashboard</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
             {errors.general && (
               <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
                 {errors.general}
@@ -152,6 +165,7 @@ export const SeekerLoginForm = () => {
           </form>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };
