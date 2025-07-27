@@ -4,33 +4,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { BasicCombobox } from '@/components/ui/basic-combobox';
 import { api } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
-
-const COUNTRIES = [
-  'United States', 'Canada', 'United Kingdom', 'Germany', 'France', 'Spain', 'Italy',
-  'Netherlands', 'Australia', 'New Zealand', 'Singapore', 'India', 'Brazil', 'Mexico'
-];
-
-const JOB_FIELDS = [
-  { value: 0, label: 'Technology' },
-  { value: 1, label: 'Healthcare' },
-  { value: 2, label: 'Finance' },
-  { value: 3, label: 'Education' },
-  { value: 4, label: 'Marketing' },
-  { value: 5, label: 'Sales' },
-  { value: 6, label: 'Engineering' },
-  { value: 7, label: 'Design' },
-  { value: 8, label: 'Operations' },
-  { value: 9, label: 'Human Resources' }
-];
+import { useCountries } from '@/hooks/use-countries';
+import { useJobFields } from '@/hooks/use-job-fields';
+import { Search } from 'lucide-react';
 
 export const SeekerSignupForm = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const { countries, loading: loadingCountries } = useCountries();
+  const { jobFields } = useJobFields();
   const [formData, setFormData] = useState({
     id: 0,
     name: '',
@@ -122,13 +109,31 @@ export const SeekerSignupForm = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4">
-      <Card className="w-full max-w-2xl">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Create Job Seeker Account</CardTitle>
-          <CardDescription>Join our platform to find your dream job</CardDescription>
-        </CardHeader>
-        <CardContent>
+    <div className="min-h-screen bg-background">
+      {/* Header with Logo */}
+      <header className="border-b bg-card/30 backdrop-blur-sm">
+        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center h-16">
+            <button 
+              onClick={() => navigate('/')}
+              className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+            >
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <Search className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <span className="text-xl font-bold">JobHub</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex items-center justify-center py-12 px-4">
+        <Card className="w-full max-w-2xl">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">Create Job Seeker Account</CardTitle>
+            <CardDescription>Join our platform to find your dream job</CardDescription>
+          </CardHeader>
+          <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             {errors.general && (
               <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
@@ -155,6 +160,7 @@ export const SeekerSignupForm = () => {
                 <Label htmlFor="name">First Name</Label>
                 <Input
                   id="name"
+                  placeholder="Enter your first name"
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
                   className={errors.name ? 'border-destructive' : ''}
@@ -166,6 +172,7 @@ export const SeekerSignupForm = () => {
                 <Label htmlFor="sirName">Last Name</Label>
                 <Input
                   id="sirName"
+                  placeholder="Enter your last name"
                   value={formData.sirName}
                   onChange={(e) => handleInputChange('sirName', e.target.value)}
                   className={errors.sirName ? 'border-destructive' : ''}
@@ -179,6 +186,7 @@ export const SeekerSignupForm = () => {
               <Input
                 id="email"
                 type="email"
+                placeholder="your@email.com"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 className={errors.email ? 'border-destructive' : ''}
@@ -191,6 +199,7 @@ export const SeekerSignupForm = () => {
               <Input
                 id="password"
                 type="password"
+                placeholder="Enter your password"
                 value={formData.password}
                 onChange={(e) => handleInputChange('password', e.target.value)}
                 className={errors.password ? 'border-destructive' : ''}
@@ -201,35 +210,30 @@ export const SeekerSignupForm = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Country</Label>
-                <Select onValueChange={(value) => handleInputChange('country', value)}>
-                  <SelectTrigger className={errors.country ? 'border-destructive' : ''}>
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COUNTRIES.map((country) => (
-                      <SelectItem key={country} value={country}>
-                        {country}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className={errors.country ? 'border rounded-md border-destructive' : ''}>
+                  <BasicCombobox
+                    options={Array.isArray(countries) ? countries : []}
+                    value={formData.country}
+                    onValueChange={(value) => handleInputChange('country', value)}
+                    placeholder={loadingCountries ? "Loading countries..." : "Select country"}
+                    emptyMessage={loadingCountries ? "Loading..." : "No country found."}
+                    disabled={loadingCountries}
+                  />
+                </div>
                 {errors.country && <p className="text-sm text-destructive">{errors.country}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label>Field</Label>
-                <Select onValueChange={(value) => handleInputChange('field', value)}>
-                  <SelectTrigger className={errors.field ? 'border-destructive' : ''}>
-                    <SelectValue placeholder="Select field" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {JOB_FIELDS.map((field) => (
-                      <SelectItem key={field.value} value={field.value.toString()}>
-                        {field.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className={errors.field ? 'border rounded-md border-destructive' : ''}>
+                  <BasicCombobox
+                    options={Array.isArray(jobFields) ? jobFields : []}
+                    value={formData.field}
+                    onValueChange={(value) => handleInputChange('field', value)}
+                    placeholder="Select field"
+                    emptyMessage="No field found."
+                  />
+                </div>
                 {errors.field && <p className="text-sm text-destructive">{errors.field}</p>}
               </div>
             </div>
@@ -242,6 +246,7 @@ export const SeekerSignupForm = () => {
                   type="number"
                   min="0"
                   max="24"
+                  placeholder="e.g., 8"
                   value={formData.dailyWorkHours}
                   onChange={(e) => handleInputChange('dailyWorkHours', e.target.value)}
                   className={errors.dailyWorkHours ? 'border-destructive' : ''}
@@ -256,6 +261,7 @@ export const SeekerSignupForm = () => {
                   type="number"
                   min="0"
                   max="100"
+                  placeholder="e.g., 5"
                   value={formData.yearsOfExperience}
                   onChange={(e) => handleInputChange('yearsOfExperience', e.target.value)}
                   className={errors.yearsOfExperience ? 'border-destructive' : ''}
@@ -298,6 +304,7 @@ export const SeekerSignupForm = () => {
           </form>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };

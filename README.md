@@ -1,18 +1,18 @@
-# Welcome to your Lovable project
+# JobHub - Professional Career Platform
 
-## Project info
+**Created by**: Leah Pines and Rachel Fried
 
-**URL**: https://lovable.dev/projects/f8ebbd0e-440f-4eae-ac4c-cf339b10798c
+A modern job platform that connects talented professionals with leading companies. Built with React, TypeScript, and modern web technologies.
 
-## How can I edit this code?
+## Project Overview
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/f8ebbd0e-440f-4eae-ac4c-cf339b10798c) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
+JobHub is a comprehensive career platform featuring:
+- Job seeker profiles and job search functionality
+- Company profiles and job posting capabilities
+- AI-powered job matching algorithms
+- Real-time application tracking
+- Searchable autocomplete dropdowns for countries and job fields
+- Responsive design with modern UI components
 
 **Use your preferred IDE**
 

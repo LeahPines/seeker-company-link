@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { api } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
+import { Search } from 'lucide-react';
 
 export const CompanySignupForm = () => {
   const navigate = useNavigate();
@@ -79,14 +80,26 @@ export const CompanySignupForm = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4">
-      <Card className="w-full max-w-lg">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Create Company Account</CardTitle>
-          <CardDescription>Join our platform to find the best talent</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center mb-8">
+          <Search className="h-8 w-8 text-blue-600 mr-3" />
+          <button
+            onClick={() => navigate('/')}
+            className="text-2xl font-bold text-gray-900 hover:text-blue-600 transition-colors"
+          >
+            JobHub
+          </button>
+        </div>
+      </div>
+      <div className="flex items-center justify-center py-4 px-4">
+        <Card className="w-full max-w-lg">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">Create Company Account</CardTitle>
+            <CardDescription>Join our platform to find the best talent</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
             {errors.general && (
               <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
                 {errors.general}
@@ -184,6 +197,7 @@ export const CompanySignupForm = () => {
           </form>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };

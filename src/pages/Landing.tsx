@@ -32,6 +32,15 @@ export const Landing = () => {
               </div>
               <span className="text-xl font-bold">JobHub</span>
             </div>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => navigate('/company')}
+              className="flex items-center space-x-2 text-muted-foreground hover:text-foreground"
+            >
+              <Building2 className="w-4 h-4" />
+              <span>Looking to Hire?</span>
+            </Button>
           </div>
         </div>
       </header>
@@ -41,25 +50,25 @@ export const Landing = () => {
         <div className="container max-w-6xl mx-auto text-center">
           <div className="animate-fade-in">
             <h1 className="text-4xl md:text-6xl font-bold mb-6 gradient-text">
-              Connect Talent with
-              <span className="block text-primary">Opportunity</span>
+              Find Your Dream
+              <span className="block text-primary">Career</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-12 max-w-3xl mx-auto">
-              The modern job platform that matches the right candidates with the right companies. 
-              Join thousands of professionals advancing their careers.
+              Discover thousands of job opportunities that match your skills and aspirations. 
+              Connect with top companies and advance your professional journey.
             </p>
           </div>
 
-          {/* Action Cards */}
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto animate-slide-up">
+          {/* Job Seeker Action Card */}
+          <div className="max-w-md mx-auto animate-slide-up">
             <Card className="card-hover glass-card">
               <CardHeader>
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
                   <Users className="w-6 h-6 text-primary" />
                 </div>
-                <CardTitle className="text-2xl">I'm Looking for a Job</CardTitle>
+                <CardTitle className="text-2xl">Start Your Job Search</CardTitle>
                 <CardDescription className="text-base">
-                  Find your dream career with personalized job matching and application tracking
+                  Join thousands of professionals who found their dream jobs through our platform
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -80,35 +89,6 @@ export const Landing = () => {
                 </div>
               </CardContent>
             </Card>
-
-            <Card className="card-hover glass-card">
-              <CardHeader>
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                  <Building2 className="w-6 h-6 text-primary" />
-                </div>
-                <CardTitle className="text-2xl">I'm Hiring Talent</CardTitle>
-                <CardDescription className="text-base">
-                  Post jobs and find qualified candidates with intelligent matching algorithms
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <Button 
-                    className="w-full"
-                    onClick={() => navigate('/company/signup')}
-                  >
-                    Sign Up
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => navigate('/company/login')}
-                  >
-                    Sign In
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </section>
@@ -118,7 +98,7 @@ export const Landing = () => {
         <div className="container max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Why Choose JobHub?</h2>
-            <p className="text-muted-foreground text-lg">Professional tools for the modern job market</p>
+            <p className="text-muted-foreground text-lg">Everything you need to find your next career opportunity</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -126,24 +106,24 @@ export const Landing = () => {
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Search className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Smart Matching</h3>
-              <p className="text-muted-foreground">AI-powered algorithms match candidates with relevant opportunities</p>
+              <h3 className="text-xl font-semibold mb-2">Smart Job Matching</h3>
+              <p className="text-muted-foreground">Advanced matching system finds jobs that perfectly match your skills and preferences</p>
             </div>
 
             <div className="text-center">
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <TrendingUp className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Real-time Analytics</h3>
-              <p className="text-muted-foreground">Track applications and hiring progress with detailed insights</p>
+              <h3 className="text-xl font-semibold mb-2">Career Growth</h3>
+              <p className="text-muted-foreground">Track your applications and discover opportunities for professional development</p>
             </div>
 
             <div className="text-center">
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Users className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Professional Network</h3>
-              <p className="text-muted-foreground">Connect with industry professionals and build meaningful relationships</p>
+              <h3 className="text-xl font-semibold mb-2">Top Companies</h3>
+              <p className="text-muted-foreground">Connect with leading employers across industries looking for talent like you</p>
             </div>
           </div>
         </div>
@@ -152,7 +132,7 @@ export const Landing = () => {
       {/* Footer */}
       <footer className="border-t py-8 px-4">
         <div className="container max-w-6xl mx-auto text-center text-muted-foreground">
-          <p>&copy; 2024 JobHub. Professional career platform.</p>
+          <p>&copy; 2025 JobHub. Created by Leah Pines and Rachel Fried.</p>
         </div>
       </footer>
     </div>
