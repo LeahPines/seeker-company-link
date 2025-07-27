@@ -20,6 +20,11 @@ export const createApiClient = () => {
     const token = getAuthToken();
     const url = `${API_BASE_URL}${endpoint}`;
 
+    console.log('Making API request to:', url);
+    console.log('Endpoint:', endpoint);
+    console.log('Method:', options.method || 'GET');
+    console.log('Request data:', options.body);
+
     const config: RequestInit = {
       ...options,
       headers: {
@@ -31,6 +36,8 @@ export const createApiClient = () => {
 
     try {
       const response = await fetch(url, config);
+      console.log('Response URL:', response.url);
+      console.log('Response status:', response.status);
       
       if (!response.ok) {
         if (response.status === 401) {

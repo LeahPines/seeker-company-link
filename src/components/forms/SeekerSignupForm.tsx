@@ -228,7 +228,7 @@ export const SeekerSignupForm = () => {
                 <div className={errors.field ? 'border rounded-md border-destructive' : ''}>
                   <BasicCombobox
                     options={Array.isArray(jobFields) ? jobFields : []}
-                    value={formData.field}
+                    value={formData.field.toString()}
                     onValueChange={(value) => handleInputChange('field', value)}
                     placeholder="Select field"
                     emptyMessage="No field found."

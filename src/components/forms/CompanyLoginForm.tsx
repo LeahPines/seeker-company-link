@@ -8,7 +8,6 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { api } from '@/lib/api';
 import { saveAuthData, decodeJwtPayload } from '@/lib/auth';
 import { toast } from '@/hooks/use-toast';
-import { Search } from 'lucide-react';
 
 export const CompanyLoginForm = () => {
   const navigate = useNavigate();
@@ -37,6 +36,8 @@ export const CompanyLoginForm = () => {
 
     setLoading(true);
     try {
+      console.log('Company login attempt with data:', formData);
+      console.log('Calling endpoint: /Auth/SignInCompany');
       const response = await api.post('/Auth/SignInCompany', formData);
 
       // Extract token and decode payload
@@ -47,25 +48,32 @@ export const CompanyLoginForm = () => {
         throw new Error('Invalid token received');
       }
 
-      // Save auth data
+      // Save auth data and role in localStorage
+      const role = payload.Role || 'Company';
       const authData = {
         token,
-        userId: payload.NameIdentifier.toString(),
-        role: 'Company' as const,
+        userId: payload.NameIdentifier?.toString() || payload.nameid?.toString() || '',
+        role,
         email: payload.Email || formData.email
       };
-
       saveAuthData(authData);
-      
+      localStorage.setItem('role', role);
+      console.log('Logged in as role:', role);
       toast({
-        title: "Welcome back!",
-        description: "Successfully signed in to your company account",
+        title: `Welcome back, ${role}!`,
+        description: "Successfully signed in to your company account. Redirecting...",
       });
-      
-      navigate('/company/dashboard');
+      navigate('/company/dashboard', { replace: true });
     } catch (error: any) {
+      console.error('Company login error:', error);
+      console.error('Error response:', error.response);
+      console.error('Error message:', error.message);
+      console.error('Error status:', error.status);
+      
       if (error.status === 400 || error.status === 401) {
         setErrors({ general: 'Invalid email or password' });
+      } else {
+        setErrors({ general: `Login failed: ${error.message || 'Network error'}` });
       }
     } finally {
       setLoading(false);
@@ -80,26 +88,14 @@ export const CompanyLoginForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center mb-8">
-          <Search className="h-8 w-8 text-blue-600 mr-3" />
-          <button
-            onClick={() => navigate('/')}
-            className="text-2xl font-bold text-gray-900 hover:text-blue-600 transition-colors"
-          >
-            JobHub
-          </button>
-        </div>
-      </div>
-      <div className="flex items-center justify-center py-4 px-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Company Sign In</CardTitle>
-            <CardDescription>Access your hiring dashboard</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Company Sign In</CardTitle>
+          <CardDescription>Access your hiring dashboard</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
             {errors.general && (
               <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
                 {errors.general}
@@ -165,7 +161,6 @@ export const CompanyLoginForm = () => {
           </form>
         </CardContent>
       </Card>
-      </div>
     </div>
   );
 };

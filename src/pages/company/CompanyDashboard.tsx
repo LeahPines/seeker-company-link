@@ -151,7 +151,7 @@ export const CompanyDashboard = () => {
         jobDescription: jobForm.jobDescription
       };
 
-      await api.post('/AddJob', payload);
+      await api.post('/Job/Add', payload);
       
       toast({
         title: "Job Posted!",
