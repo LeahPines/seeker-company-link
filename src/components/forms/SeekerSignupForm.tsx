@@ -32,6 +32,7 @@ export const SeekerSignupForm = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
+    id: 0,
     name: '',
     sirName: '',
     email: '',
@@ -40,7 +41,7 @@ export const SeekerSignupForm = () => {
     dailyWorkHours: '',
     yearsOfExperience: '',
     hasDegree: false,
-    field: ''
+    field: 0
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -77,26 +78,32 @@ export const SeekerSignupForm = () => {
 
     setLoading(true);
     try {
+      // Ensure field is a number and use correct endpoint
       const payload = {
-        name: formData.name,
-        sirName: formData.sirName,
-        email: formData.email,
+        id: Number(formData.id),
+        name: formData.name.trim(),
+        sirName: formData.sirName.trim(),
+        email: formData.email.trim(),
         password: formData.password,
-        country: formData.country,
-        dailyWorkHours: parseInt(formData.dailyWorkHours),
-        yearsOfExperience: parseInt(formData.yearsOfExperience),
-        hasDegree: formData.hasDegree,
-        field: parseInt(formData.field)
+        country: formData.country.trim(),
+        dailyWorkHours: Number(formData.dailyWorkHours),
+        yearsOfExperience: Number(formData.yearsOfExperience),
+        hasDegree: Boolean(formData.hasDegree),
+        field: Number(formData.field)
       };
 
-      await api.post('/seeker/signup', payload);
-      
+      const response = await api.post('/Auth/SignUpJobSeeker', payload);
+
       toast({
         title: "Account Created!",
-        description: "Please sign in with your credentials",
+        description: "Welcome! Redirecting to jobs...",
       });
-      
-      navigate('/seeker/login');
+
+      // Optionally save token if returned
+      if (response && response.token) {
+        localStorage.setItem('token', response.token);
+      }
+      navigate('/seeker/dashboard');
     } catch (error: any) {
       if (error.status === 400) {
         // Handle validation errors from backend
@@ -129,7 +136,21 @@ export const SeekerSignupForm = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="id">ID</Label>
+                <Input
+                  id="id"
+                  type="number"
+                  min="1"
+                  value={formData.id}
+                  onChange={(e) => handleInputChange('id', e.target.value)}
+                  className={errors.id ? 'border-destructive' : ''}
+                  placeholder="Enter your ID (integer)"
+                />
+                {errors.id && <p className="text-sm text-destructive">{errors.id}</p>}
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="name">First Name</Label>
                 <Input
