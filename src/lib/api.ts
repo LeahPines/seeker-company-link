@@ -1,8 +1,9 @@
 import { getAuthToken, clearAuthData } from './auth';
 import { toast } from '@/hooks/use-toast';
 
-// Update this URL to match your actual backend server
-const API_BASE_URL = 'https://your-backend-api.com/api';
+
+const API_BASE_URL = 'https://localhost:7100/api'; 
+
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {

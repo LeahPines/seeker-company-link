@@ -37,7 +37,7 @@ export const SeekerLoginForm = () => {
 
     setLoading(true);
     try {
-      const response = await api.post('/seeker/login', formData);
+      const response = await api.post('/Auth/SignInJobSeeker', formData);
       
       // Extract token and decode payload
       const token = response.token || response.accessToken;
@@ -47,22 +47,22 @@ export const SeekerLoginForm = () => {
         throw new Error('Invalid token received');
       }
 
-      // Save auth data
+      // Save auth data and role in localStorage
+      const role = payload.Role || 'JobSeeker';
       const authData = {
         token,
-        userId: payload.NameIdentifier.toString(),
-        role: 'JobSeeker' as const,
+        userId: payload.NameIdentifier?.toString() || payload.nameid?.toString() || '',
+        role,
         email: payload.Email || formData.email
       };
-
       saveAuthData(authData);
-      
+      localStorage.setItem('role', role);
+      console.log('Logged in as role:', role);
       toast({
-        title: "Welcome back!",
-        description: "Successfully signed in to your account",
+        title: `Welcome back, ${role}!`,
+        description: "Successfully signed in to your account. Redirecting...",
       });
-      
-      navigate('/seeker/dashboard');
+      navigate('/seeker/dashboard', { replace: true });
     } catch (error: any) {
       if (error.status === 400 || error.status === 401) {
         setErrors({ general: 'Invalid email or password' });

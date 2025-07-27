@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { isAuthenticated, getUserRole } from '@/lib/auth';
 
@@ -8,45 +8,43 @@ interface ProtectedRouteProps {
   redirectTo?: string;
 }
 
-export const ProtectedRoute = ({ 
-  children, 
-  allowedRoles, 
-  redirectTo = '/' 
+export const ProtectedRoute = ({
+  children,
+  allowedRoles,
+  redirectTo = '/',
 }: ProtectedRouteProps) => {
   const navigate = useNavigate();
+  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated()) {
-      navigate(redirectTo);
+    const auth = isAuthenticated();
+    if (!auth) {
+      navigate(redirectTo, { replace: true });
       return;
     }
 
     if (allowedRoles) {
       const userRole = getUserRole();
       if (!userRole || !allowedRoles.includes(userRole)) {
-        // Redirect to appropriate dashboard based on role
-        const role = getUserRole();
-        if (role === 'JobSeeker') {
-          navigate('/seeker/dashboard');
-        } else if (role === 'Company') {
-          navigate('/company/dashboard');
+        // Redirect based on role or to home
+        if (userRole === 'JobSeeker') {
+          navigate('/seeker/dashboard', { replace: true });
+        } else if (userRole === 'Company') {
+          navigate('/company/dashboard', { replace: true });
         } else {
-          navigate('/');
+          navigate(redirectTo, { replace: true });
         }
         return;
       }
     }
+
+    // Passed all checks
+    setChecked(true);
   }, [navigate, allowedRoles, redirectTo]);
 
-  if (!isAuthenticated()) {
-    return null;
-  }
-
-  if (allowedRoles) {
-    const userRole = getUserRole();
-    if (!userRole || !allowedRoles.includes(userRole)) {
-      return null;
-    }
+  // While auth is checked and redirect is pending, render nothing or a loader
+  if (!checked) {
+    return null; // or return a <LoadingSpinner /> if you have one
   }
 
   return <>{children}</>;

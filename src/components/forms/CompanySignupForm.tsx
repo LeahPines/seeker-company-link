@@ -55,7 +55,7 @@ export const CompanySignupForm = () => {
         rate: parseFloat(formData.rate)
       };
 
-      await api.post('/company/signup', payload);
+      await api.post('/Auth/SignUpCompany', payload);
       
       toast({
         title: "Company Account Created!",

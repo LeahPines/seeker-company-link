@@ -37,8 +37,8 @@ export const CompanyLoginForm = () => {
 
     setLoading(true);
     try {
-      const response = await api.post('/company/login', formData);
-      
+      const response = await api.post('/Auth/SignInCompany', formData);
+
       // Extract token and decode payload
       const token = response.token || response.accessToken;
       const payload = decodeJwtPayload(token);
