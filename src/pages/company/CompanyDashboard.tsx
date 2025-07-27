@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+// Select component no longer needed, using Combobox instead
 import { Checkbox } from '@/components/ui/checkbox';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { api } from '@/lib/api';
@@ -14,6 +14,10 @@ import { getUserId } from '@/lib/auth';
 import { toast } from '@/hooks/use-toast';
 import { Building2, Plus, Users, Eye, X, MapPin, Clock, Target, GraduationCap } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+
+import { useCountries } from '@/hooks/use-countries';
+import { useJobFields } from '@/hooks/use-job-fields';
+import { BasicCombobox } from '@/components/ui/basic-combobox';
 
 interface CompanyProfile {
   code: string;
@@ -43,27 +47,7 @@ interface Candidate {
   hasDegree: boolean;
   field: number;
   matchingScore?: number;
-}
-
-const COUNTRIES = [
-  'United States', 'Canada', 'United Kingdom', 'Germany', 'France', 'Spain', 'Italy',
-  'Netherlands', 'Australia', 'New Zealand', 'Singapore', 'India', 'Brazil', 'Mexico'
-];
-
-const JOB_FIELDS = [
-  { value: 0, label: 'Technology' },
-  { value: 1, label: 'Healthcare' },
-  { value: 2, label: 'Finance' },
-  { value: 3, label: 'Education' },
-  { value: 4, label: 'Marketing' },
-  { value: 5, label: 'Sales' },
-  { value: 6, label: 'Engineering' },
-  { value: 7, label: 'Design' },
-  { value: 8, label: 'Operations' },
-  { value: 9, label: 'Human Resources' }
-];
-
-const FIELD_NAMES = JOB_FIELDS.map(f => f.label);
+};
 
 export const CompanyDashboard = () => {
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
@@ -72,6 +56,8 @@ export const CompanyDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showJobForm, setShowJobForm] = useState(false);
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
+  const { countries, loading: loadingCountries } = useCountries();
+  const { jobFields } = useJobFields();
   
   const [jobForm, setJobForm] = useState({
     code: '',
@@ -153,10 +139,13 @@ export const CompanyDashboard = () => {
 
     setSubmitting(true);
     try {
+      // Ensure field is a valid number or default to 0
+      const fieldValue = jobForm.field ? parseInt(jobForm.field) : 0;
+      
       const payload = {
         code: jobForm.code,
         companyId: userId,
-        field: parseInt(jobForm.field),
+        field: fieldValue, // Now safely parsed
         country: jobForm.country,
         workHours: parseInt(jobForm.workHours),
         minYearsExperience: parseInt(jobForm.minYearsExperience),
@@ -312,18 +301,15 @@ export const CompanyDashboard = () => {
 
                       <div className="space-y-2">
                         <Label>Field</Label>
-                        <Select onValueChange={(value) => setJobForm(prev => ({ ...prev, field: value }))}>
-                          <SelectTrigger className={jobFormErrors.field ? 'border-destructive' : ''}>
-                            <SelectValue placeholder="Select field" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {JOB_FIELDS.map((field) => (
-                              <SelectItem key={field.value} value={field.value.toString()}>
-                                {field.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className={jobFormErrors.field ? 'border rounded-md border-destructive' : ''}>
+                          <BasicCombobox
+                            options={Array.isArray(jobFields) ? jobFields : []}
+                            value={jobForm.field}
+                            onValueChange={(value) => setJobForm(prev => ({ ...prev, field: value }))}
+                            placeholder="Select field"
+                            emptyMessage="No field found."
+                          />
+                        </div>
                         {jobFormErrors.field && <p className="text-sm text-destructive">{jobFormErrors.field}</p>}
                       </div>
                     </div>
@@ -331,18 +317,16 @@ export const CompanyDashboard = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Country</Label>
-                        <Select onValueChange={(value) => setJobForm(prev => ({ ...prev, country: value }))}>
-                          <SelectTrigger className={jobFormErrors.country ? 'border-destructive' : ''}>
-                            <SelectValue placeholder="Select country" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {COUNTRIES.map((country) => (
-                              <SelectItem key={country} value={country}>
-                                {country}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className={jobFormErrors.country ? 'border rounded-md border-destructive' : ''}>
+                          <BasicCombobox
+                            options={Array.isArray(countries) ? countries : []}
+                            value={jobForm.country}
+                            onValueChange={(value) => setJobForm(prev => ({ ...prev, country: value }))}
+                            placeholder={loadingCountries ? "Loading countries..." : "Select country"}
+                            emptyMessage={loadingCountries ? "Loading..." : "No country found."}
+                            disabled={loadingCountries}
+                          />
+                        </div>
                         {jobFormErrors.country && <p className="text-sm text-destructive">{jobFormErrors.country}</p>}
                       </div>
 
@@ -438,7 +422,7 @@ export const CompanyDashboard = () => {
                       <div className="flex items-start justify-between mb-4">
                         <div>
                           <h3 className="font-semibold text-lg mb-2">
-                            {FIELD_NAMES[job.field]} Position
+                            {(Array.isArray(jobFields) && jobFields.find(f => f && f.value === String(job.field)))?.label || 'Unknown'} Position
                           </h3>
                           <p className="text-muted-foreground text-sm mb-2">Job Code: {job.code}</p>
                         </div>
@@ -536,7 +520,7 @@ export const CompanyDashboard = () => {
                                   <span>{candidate.yearsOfExperience} years</span>
                                 </div>
                                 <div className="flex items-center space-x-1">
-                                  <span>{FIELD_NAMES[candidate.field]}</span>
+                                  <span>{(Array.isArray(jobFields) && jobFields.find(f => f && f.value === String(candidate.field)))?.label || 'Unknown'}</span>
                                 </div>
                                 {candidate.hasDegree && (
                                   <div className="flex items-center space-x-1">

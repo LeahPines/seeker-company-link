@@ -36,6 +36,8 @@ export const CompanyLoginForm = () => {
 
     setLoading(true);
     try {
+      console.log('Company login attempt with data:', formData);
+      console.log('Calling endpoint: /Auth/SignInCompany');
       const response = await api.post('/Auth/SignInCompany', formData);
 
       // Extract token and decode payload
@@ -63,8 +65,15 @@ export const CompanyLoginForm = () => {
       });
       navigate('/company/dashboard', { replace: true });
     } catch (error: any) {
+      console.error('Company login error:', error);
+      console.error('Error response:', error.response);
+      console.error('Error message:', error.message);
+      console.error('Error status:', error.status);
+      
       if (error.status === 400 || error.status === 401) {
         setErrors({ general: 'Invalid email or password' });
+      } else {
+        setErrors({ general: `Login failed: ${error.message || 'Network error'}` });
       }
     } finally {
       setLoading(false);

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Landing } from "./pages/Landing";
+import { CompanyLanding } from "./pages/CompanyLanding";
 import { SeekerSignupForm } from "./components/forms/SeekerSignupForm";
 import { SeekerLoginForm } from "./components/forms/SeekerLoginForm";
 import { CompanySignupForm } from "./components/forms/CompanySignupForm";
@@ -22,8 +23,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* Landing Page */}
+          {/* Landing Pages */}
           <Route path="/" element={<Landing />} />
+          <Route path="/company" element={<CompanyLanding />} />
           
           {/* Job Seeker Routes */}
           <Route path="/seeker/signup" element={<SeekerSignupForm />} />
