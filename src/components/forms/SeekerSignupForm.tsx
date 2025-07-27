@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { api } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
+import { saveAuthData } from '@/lib/auth';
 
 const COUNTRIES = [
   'United States', 'Canada', 'United Kingdom', 'Germany', 'France', 'Spain', 'Italy',
@@ -99,11 +100,32 @@ export const SeekerSignupForm = () => {
         description: "Welcome! Redirecting to jobs...",
       });
 
-      // Optionally save token if returned
+      // Save full auth state if token returned
       if (response && response.token) {
+        let role: 'JobSeeker' = 'JobSeeker';
+        let userId = '';
+        let email = formData.email;
+        try {
+          const payload = JSON.parse(atob(response.token.split('.')[1]));
+          // Only allow 'JobSeeker' for signup
+          userId = payload.NameIdentifier?.toString() || payload.nameid?.toString() || '';
+          email = payload.Email || formData.email;
+        } catch {}
+        const authData = {
+          token: response.token,
+          userId,
+          role,
+          email
+        };
         localStorage.setItem('token', response.token);
+        localStorage.setItem('role', role);
+        localStorage.setItem('userId', userId);
+        localStorage.setItem('email', email);
+        // Update global auth state immediately
+        saveAuthData(authData);
+        console.log('Signed up as:', authData);
       }
-      navigate('/seeker/dashboard');
+      navigate('/seeker/dashboard', { replace: true });
     } catch (error: any) {
       if (error.status === 400) {
         // Handle validation errors from backend

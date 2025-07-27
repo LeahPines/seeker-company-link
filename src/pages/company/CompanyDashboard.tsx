@@ -96,8 +96,8 @@ export const CompanyDashboard = () => {
 
     try {
       const [profileResponse, jobsResponse] = await Promise.all([
-        api.get(`/GetCompanyById/${userId}`),
-        api.get(`/GetCompanyJobs/${userId}`)
+        api.get(`/Company/GetCompanyById?userId=${userId}`),
+        api.get(`/Job/GetJobsForCompany?userId=${userId}`)
       ]);
 
       setProfile(profileResponse);
@@ -111,10 +111,12 @@ export const CompanyDashboard = () => {
 
   const loadCandidates = async (jobCode: string, type: 'matching' | 'applied') => {
     try {
-      const endpoint = type === 'matching' 
-        ? `/FindMatchingCandidates/${jobCode}`
-        : `/GetAppliedCandidatesWithCandidatesByJobCode/${jobCode}`;
-      
+      let endpoint = '';
+      if (type === 'matching') {
+        endpoint = `/Job/FindMatchingCandidates/${jobCode}`;
+      } else {
+        endpoint = `/Job/GetAppliedCandidatesWithDetails/${jobCode}`;
+      }
       const response = await api.get(endpoint);
       setCandidates(prev => ({ ...prev, [jobCode]: response || [] }));
     } catch (error) {
@@ -162,13 +164,13 @@ export const CompanyDashboard = () => {
         jobDescription: jobForm.jobDescription
       };
 
-      await api.post('/AddJob', payload);
-      
+      await api.post('/Job/AddJob', payload);
+
       toast({
         title: "Job Posted!",
         description: "Your job posting is now live",
       });
-      
+
       setShowJobForm(false);
       setJobForm({
         code: '',
@@ -191,13 +193,13 @@ export const CompanyDashboard = () => {
 
   const handleDeactivateJob = async (jobCode: string) => {
     try {
-      await api.delete(`/NotSeekingWorkers/${jobCode}`);
-      
+      await api.delete(`/Job/NotSeekingWorkers/${jobCode}`);
+
       toast({
         title: "Job Deactivated",
         description: "The job posting has been removed",
       });
-      
+
       setJobs(prev => prev.filter(job => job.code !== jobCode));
     } catch (error) {
       toast({

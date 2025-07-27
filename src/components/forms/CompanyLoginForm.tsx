@@ -46,22 +46,22 @@ export const CompanyLoginForm = () => {
         throw new Error('Invalid token received');
       }
 
-      // Save auth data
+      // Save auth data and role in localStorage
+      const role = payload.Role || 'Company';
       const authData = {
         token,
-        userId: payload.NameIdentifier.toString(),
-        role: 'Company' as const,
+        userId: payload.NameIdentifier?.toString() || payload.nameid?.toString() || '',
+        role,
         email: payload.Email || formData.email
       };
-
       saveAuthData(authData);
-      
+      localStorage.setItem('role', role);
+      console.log('Logged in as role:', role);
       toast({
-        title: "Welcome back!",
-        description: "Successfully signed in to your company account",
+        title: `Welcome back, ${role}!`,
+        description: "Successfully signed in to your company account. Redirecting...",
       });
-      
-      navigate('/company/dashboard');
+      navigate('/company/dashboard', { replace: true });
     } catch (error: any) {
       if (error.status === 400 || error.status === 401) {
         setErrors({ general: 'Invalid email or password' });

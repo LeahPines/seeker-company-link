@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { api } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
+import { saveAuthData } from '@/lib/auth';
 
 export const CompanySignupForm = () => {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ export const CompanySignupForm = () => {
     name: '',
     email: '',
     password: '',
-    rate: ''
+    rate: 0.0
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -29,10 +30,10 @@ export const CompanySignupForm = () => {
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email format';
     if (!formData.password) newErrors.password = 'Password is required';
     else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-    if (!formData.rate) newErrors.rate = 'Rate is required';
+    if (formData.rate === null || formData.rate === undefined) newErrors.rate = 'Rate is required';
     else {
-      const rate = parseFloat(formData.rate);
-      if (isNaN(rate) || rate < 0 || rate > 5) newErrors.rate = 'Rate must be between 0-5';
+      const rate = parseFloat(formData.rate as any);
+      if (isNaN(rate) || rate < 0 || rate > 5) newErrors.rate = 'Rate must be a float between 0-5';
     }
 
     setErrors(newErrors);
@@ -51,17 +52,28 @@ export const CompanySignupForm = () => {
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        rate: parseFloat(formData.rate)
+        rate: parseFloat(formData.rate as any)
       };
 
-      await api.post('/Auth/SignUpCompany', payload);
-      
+      const response = await api.post('/Auth/SignUpCompany', payload);
+      // Save token, role, and userId to global state and localStorage for ProtectedRoute
+      if (response && response.token) {
+        let role = 'Company';
+        let userId = '';
+        let email = formData.email;
+        try {
+          const payload = JSON.parse(atob(response.token.split('.')[1]));
+          role = payload.Role || 'Company';
+          userId = payload.UserId || '';
+        } catch {}
+        saveAuthData({ token: response.token, role: role as 'Company', userId, email });
+        console.log('Signed up as role:', role, 'userId:', userId);
+      }
       toast({
         title: "Company Account Created!",
-        description: "Please sign in with your credentials",
+        description: "Welcome to your dashboard!",
       });
-      
-      navigate('/company/login');
+      navigate('/company/dashboard', { replace: true });
     } catch (error: any) {
       if (error.status === 400) {
         setErrors({ general: error.message || 'Validation failed' });
@@ -72,7 +84,10 @@ export const CompanySignupForm = () => {
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [field]: field === 'rate' ? parseFloat(value) : value
+    }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -154,7 +169,7 @@ export const CompanySignupForm = () => {
                 value={formData.rate}
                 onChange={(e) => handleInputChange('rate', e.target.value)}
                 className={errors.rate ? 'border-destructive' : ''}
-                placeholder="4.5"
+                placeholder="4.2"
               />
               {errors.rate && <p className="text-sm text-destructive">{errors.rate}</p>}
             </div>
