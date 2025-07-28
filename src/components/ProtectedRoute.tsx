@@ -26,7 +26,6 @@ export const ProtectedRoute = ({
     if (allowedRoles) {
       const userRole = getUserRole();
       if (!userRole || !allowedRoles.includes(userRole)) {
-        // Redirect based on role or to home
         if (userRole === 'JobSeeker') {
           navigate('/seeker/dashboard', { replace: true });
         } else if (userRole === 'Company') {
@@ -38,13 +37,11 @@ export const ProtectedRoute = ({
       }
     }
 
-    // Passed all checks
     setChecked(true);
   }, [navigate, allowedRoles, redirectTo]);
 
-  // While auth is checked and redirect is pending, render nothing or a loader
   if (!checked) {
-    return null; // or return a <LoadingSpinner /> if you have one
+    return null; 
   }
 
   return <>{children}</>;

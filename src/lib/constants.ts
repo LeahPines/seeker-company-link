@@ -1,4 +1,3 @@
-// Job field enum and related constants
 export const JOB_FIELDS = [
   'Technology',
   'Healthcare', 

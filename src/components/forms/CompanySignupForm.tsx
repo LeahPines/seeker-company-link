@@ -17,7 +17,7 @@ export const CompanySignupForm = () => {
     name: '',
     email: '',
     password: '',
-    rate: 0.0
+    rate: 0
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -25,15 +25,27 @@ export const CompanySignupForm = () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.code.trim()) newErrors.code = 'Company code is required';
+    else {
+      const code = parseInt(formData.code);
+      if (isNaN(code) || code <= 0) newErrors.code = 'Code must be a positive integer';
+    }
+    
     if (!formData.name.trim()) newErrors.name = 'Company name is required';
+    else if (formData.name.trim().length < 2) newErrors.name = 'Name must be at least 2 characters';
+    else if (formData.name.trim().length > 50) newErrors.name = 'Name must be at most 50 characters';
+    
     if (!formData.email.trim()) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email format';
+    else if (formData.email.length > 50) newErrors.email = 'Email must be at most 50 characters';
+    
     if (!formData.password) newErrors.password = 'Password is required';
     else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    else if (formData.password.length > 100) newErrors.password = 'Password must be at most 100 characters';
+    
     if (formData.rate === null || formData.rate === undefined) newErrors.rate = 'Rate is required';
     else {
-      const rate = parseFloat(formData.rate as any);
-      if (isNaN(rate) || rate < 0 || rate > 5) newErrors.rate = 'Rate must be a float between 0-5';
+      const rate = parseInt(formData.rate as any);
+      if (isNaN(rate) || rate < 0 || rate > 5) newErrors.rate = 'Rate must be an integer between 0-5';
     }
 
     setErrors(newErrors);
@@ -48,15 +60,15 @@ export const CompanySignupForm = () => {
     setLoading(true);
     try {
       const payload = {
-        code: formData.code,
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        rate: parseFloat(formData.rate as any)
+        Code: parseInt(formData.code),
+        Name: formData.name.trim(),
+        Email: formData.email.trim(),
+        Password: formData.password,
+        Rate: parseInt(formData.rate as any)
       };
 
       const response = await api.post('/Auth/SignUpCompany', payload);
-      // Save token, role, and userId to global state and localStorage for ProtectedRoute
+      
       if (response && response.token) {
         let role = 'Company';
         let userId = '';
@@ -64,10 +76,10 @@ export const CompanySignupForm = () => {
         try {
           const payload = JSON.parse(atob(response.token.split('.')[1]));
           role = payload.Role || 'Company';
-          userId = payload.UserId || '';
-        } catch {}
+          userId = payload.UserId || payload.NameIdentifier?.toString() || payload.nameid?.toString() || payload.CompanyId?.toString() || '';
+        } catch (e) {
+        }
         saveAuthData({ token: response.token, role: role as 'Company', userId, email });
-        console.log('Signed up as role:', role, 'userId:', userId);
       }
       toast({
         title: "Company Account Created!",
@@ -76,7 +88,9 @@ export const CompanySignupForm = () => {
       navigate('/company/dashboard', { replace: true });
     } catch (error: any) {
       if (error.status === 400) {
-        setErrors({ general: error.message || 'Validation failed' });
+        setErrors({ general: error.message || 'Validation failed. Please check your input.' });
+      } else {
+        setErrors({ general: 'Failed to create account. Please try again.' });
       }
     } finally {
       setLoading(false);
@@ -86,7 +100,7 @@ export const CompanySignupForm = () => {
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
-      [field]: field === 'rate' ? parseFloat(value) : value
+      [field]: field === 'rate' ? parseInt(value) || 0 : value
     }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
@@ -163,13 +177,13 @@ export const CompanySignupForm = () => {
               <Input
                 id="rate"
                 type="number"
-                step="0.1"
                 min="0"
                 max="5"
+                step="1"
                 value={formData.rate}
                 onChange={(e) => handleInputChange('rate', e.target.value)}
                 className={errors.rate ? 'border-destructive' : ''}
-                placeholder="4.2"
+                placeholder="4"
               />
               {errors.rate && <p className="text-sm text-destructive">{errors.rate}</p>}
             </div>

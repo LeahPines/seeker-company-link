@@ -39,7 +39,6 @@ export const SeekerLoginForm = () => {
     try {
       const response = await api.post('/Auth/SignInJobSeeker', formData);
       
-      // Extract token and decode payload
       const token = response.token || response.accessToken;
       const payload = decodeJwtPayload(token);
       
@@ -47,7 +46,6 @@ export const SeekerLoginForm = () => {
         throw new Error('Invalid token received');
       }
 
-      // Save auth data and role in localStorage
       const role = payload.Role || 'JobSeeker';
       const authData = {
         token,
@@ -57,7 +55,6 @@ export const SeekerLoginForm = () => {
       };
       saveAuthData(authData);
       localStorage.setItem('role', role);
-      console.log('Logged in as role:', role);
       toast({
         title: `Welcome back, ${role}!`,
         description: "Successfully signed in to your account. Redirecting...",

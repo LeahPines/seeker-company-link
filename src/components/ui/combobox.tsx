@@ -42,42 +42,34 @@ export function Combobox({
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
   
-  // Make sure we have a valid array of options by ensuring it's always an array
   const safeOptions = React.useMemo(() => {
-    // Ensure options is an array and filter out any invalid entries
     return Array.isArray(options) 
       ? options.filter(opt => opt && typeof opt === 'object' && 'value' in opt && 'label' in opt) 
       : [];
   }, [options]);
   
-  // Ensure value is a string to prevent type errors
   const safeValue = typeof value === 'string' ? value : '';
   
-  // Find the selected option with additional safety checks
   const selectedOption = React.useMemo(() => {
     return safeOptions.find(option => option.value === safeValue);
   }, [safeOptions, safeValue]);
 
-  // State for input value with controlled input pattern
   const [inputValue, setInputValue] = React.useState("")
   
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen)
     
-    // Reset the input value when closed
     if (!isOpen) {
       setInputValue("")
     }
   }
   
-  // Safe handler for value change
   const handleValueChange = (newValue: string) => {
     if (typeof onValueChange === 'function') {
       onValueChange(newValue === safeValue ? "" : newValue)
     }
   }
   
-  // Filter options based on input
   const filteredOptions = React.useMemo(() => {
     if (!safeOptions.length) return [];
     
@@ -87,7 +79,6 @@ export function Combobox({
         return option.label.toLowerCase().includes((inputValue || '').toLowerCase());
       });
     } catch (err) {
-      console.error('Error filtering options:', err);
       return safeOptions;
     }
   }, [safeOptions, inputValue]);

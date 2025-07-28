@@ -9,7 +9,6 @@ export const CompanyLanding = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirect if already authenticated
     if (isAuthenticated()) {
       const role = getUserRole();
       if (role === 'JobSeeker') {

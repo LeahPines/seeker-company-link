@@ -20,11 +20,6 @@ export const createApiClient = () => {
     const token = getAuthToken();
     const url = `${API_BASE_URL}${endpoint}`;
 
-    console.log('Making API request to:', url);
-    console.log('Endpoint:', endpoint);
-    console.log('Method:', options.method || 'GET');
-    console.log('Request data:', options.body);
-
     const config: RequestInit = {
       ...options,
       headers: {
@@ -36,12 +31,9 @@ export const createApiClient = () => {
 
     try {
       const response = await fetch(url, config);
-      console.log('Response URL:', response.url);
-      console.log('Response status:', response.status);
       
       if (!response.ok) {
         if (response.status === 401) {
-          // Unauthorized - clear auth and redirect to login
           clearAuthData();
           window.location.href = '/';
           throw new ApiError(401, 'Session expired');
@@ -66,18 +58,8 @@ export const createApiClient = () => {
         }
 
         const errorData = await response.json().catch(() => ({}));
-        console.log('API Error Response:', errorData);
-        console.log('Full error details:', {
-          status: response.status,
-          statusText: response.statusText,
-          url: response.url,
-          errorData
-        });
         
-        // Handle validation errors from ASP.NET Core
         if (errorData.errors && typeof errorData.errors === 'object') {
-          console.log('Validation Errors:', errorData.errors);
-          // Extract all validation messages
           const allErrors = [];
           for (const field in errorData.errors) {
             const fieldErrors = errorData.errors[field];
@@ -94,12 +76,10 @@ export const createApiClient = () => {
         throw new ApiError(response.status, errorData.message || errorData.title || 'Request failed');
       }
 
-      // Handle responses that might not have JSON content
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         return await response.json();
       } else {
-        // For successful responses without JSON content, return a success indicator
         return { success: true };
       }
     } catch (error) {

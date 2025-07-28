@@ -38,17 +38,14 @@ export function BasicCombobox({
   const [open, setOpen] = React.useState(false)
   const [searchTerm, setSearchTerm] = React.useState("")
   
-  // Make sure we have a valid array of options
   const safeOptions = React.useMemo(() => {
     return Array.isArray(options) ? options : []
   }, [options])
   
-  // Find the selected option
   const selectedOption = React.useMemo(() => {
     return safeOptions.find(option => option && option.value === value)
   }, [safeOptions, value])
 
-  // Filter options based on search term
   const filteredOptions = React.useMemo(() => {
     if (!safeOptions.length) return []
     if (!searchTerm) return safeOptions

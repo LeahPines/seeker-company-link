@@ -45,7 +45,6 @@ export const getUserId = (): string | null => {
   return authData?.userId || null;
 };
 
-// Decode JWT payload to extract user data
 export const decodeJwtPayload = (token: string) => {
   try {
     const payload = token.split('.')[1];

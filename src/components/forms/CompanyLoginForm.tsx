@@ -36,11 +36,8 @@ export const CompanyLoginForm = () => {
 
     setLoading(true);
     try {
-      console.log('Company login attempt with data:', formData);
-      console.log('Calling endpoint: /Auth/SignInCompany');
       const response = await api.post('/Auth/SignInCompany', formData);
 
-      // Extract token and decode payload
       const token = response.token || response.accessToken;
       const payload = decodeJwtPayload(token);
       
@@ -48,29 +45,25 @@ export const CompanyLoginForm = () => {
         throw new Error('Invalid token received');
       }
 
-      // Save auth data and role in localStorage
       const role = payload.Role || 'Company';
       const companyName = payload.CompanyName || payload.Name || 'Company';
+      
+      const userId = payload.UserId || payload.NameIdentifier?.toString() || payload.nameid?.toString() || payload.CompanyId?.toString() || '';
+      
       const authData = {
         token,
-        userId: payload.NameIdentifier?.toString() || payload.nameid?.toString() || '',
+        userId,
         role,
         email: payload.Email || formData.email
       };
       saveAuthData(authData);
       localStorage.setItem('role', role);
-      console.log('Logged in as role:', role);
       toast({
         title: `Welcome ${companyName}!`,
         description: "Successfully signed in to your company account.",
       });
       navigate('/company/dashboard', { replace: true });
     } catch (error: any) {
-      console.error('Company login error:', error);
-      console.error('Error response:', error.response);
-      console.error('Error message:', error.message);
-      console.error('Error status:', error.status);
-      
       if (error.status === 400 || error.status === 401) {
         setErrors({ general: 'Invalid email or password' });
       } else {
