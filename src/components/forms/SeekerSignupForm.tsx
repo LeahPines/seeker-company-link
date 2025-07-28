@@ -10,6 +10,8 @@ import { BasicCombobox } from '@/components/ui/basic-combobox';
 import { api } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 import { saveAuthData } from '@/lib/auth';
+import { Search } from 'lucide-react';
+import { useCountries } from '@/hooks/use-countries';
 
 const COUNTRIES = [
   'United States', 'Canada', 'United Kingdom', 'Germany', 'France', 'Spain', 'Italy',
@@ -17,23 +19,23 @@ const COUNTRIES = [
 ];
 
 const JOB_FIELDS = [
-  { value: 0, label: 'Technology' },
-  { value: 1, label: 'Healthcare' },
-  { value: 2, label: 'Finance' },
-  { value: 3, label: 'Education' },
-  { value: 4, label: 'Marketing' },
-  { value: 5, label: 'Sales' },
-  { value: 6, label: 'Engineering' },
-  { value: 7, label: 'Design' },
-  { value: 8, label: 'Operations' },
-  { value: 9, label: 'Human Resources' }
+  { value: '0', label: 'Technology' },
+  { value: '1', label: 'Healthcare' },
+  { value: '2', label: 'Finance' },
+  { value: '3', label: 'Education' },
+  { value: '4', label: 'Marketing' },
+  { value: '5', label: 'Sales' },
+  { value: '6', label: 'Engineering' },
+  { value: '7', label: 'Design' },
+  { value: '8', label: 'Operations' },
+  { value: '9', label: 'Human Resources' }
 ];
 
 export const SeekerSignupForm = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const { countries, loading: loadingCountries } = useCountries();
-  const { jobFields } = useJobFields();
+  const jobFields = JOB_FIELDS;
   const [formData, setFormData] = useState({
     id: 0,
     name: '',
@@ -44,7 +46,7 @@ export const SeekerSignupForm = () => {
     dailyWorkHours: '',
     yearsOfExperience: '',
     hasDegree: false,
-    field: 0
+    field: '0'
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
