@@ -20,6 +20,7 @@ interface SeekerProfile {
   yearsOfExperience: number;
   hasDegree: boolean;
   field: number;
+  isActive: boolean;
 }
 
 interface JobOffer {
@@ -43,6 +44,7 @@ export const SeekerDashboard = () => {
   const [jobOffers, setJobOffers] = useState<JobOffer[]>([]);
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState<string | null>(null);
+  const [activating, setActivating] = useState(false);
 
   const userId = getUserId();
   const { jobFields } = useJobFields();
@@ -99,21 +101,31 @@ export const SeekerDashboard = () => {
   const handleApplyForJob = async (offersCode: string | number) => {
     setApplying(String(offersCode));
     console.log('=== APPLYING FOR JOB ===');
-    console.log('Offers Code:', offersCode);
+    console.log('Offers Code:', offersCode, 'Type:', typeof offersCode);
     console.log('Using PUT method (as per backend controller)');
     
     try {
       const response = await api.put(`/JobSeeker/ApplyForJob/${offersCode}`);
       console.log('✅ Apply Job API Response:', response);
       
+      // Find the specific offer to check current state
+      const currentOffer = jobOffers.find(offer => String(offer.offersCode) === String(offersCode));
+      console.log('Current offer before update:', currentOffer);
+      
       // Update the job offer status locally
-      setJobOffers(prev => 
-        prev.map(offer => 
-          offer.offersCode === String(offersCode) 
-            ? { ...offer, isApplied: true }
+      setJobOffers(prev => {
+        const updatedOffers = prev.map(offer => 
+          String(offer.offersCode) === String(offersCode) 
+            ? { 
+                ...offer, 
+                isApplied: true,
+                applicationDate: new Date().toISOString() // Set current date as application date
+              }
             : offer
-        )
-      );
+        );
+        console.log('Updated job offers after apply:', updatedOffers);
+        return updatedOffers;
+      });
 
       toast({
         title: "Application Submitted!",
@@ -128,6 +140,60 @@ export const SeekerDashboard = () => {
       });
     } finally {
       setApplying(null);
+    }
+  };
+
+  const handleActivate = async () => {
+    setActivating(true);
+    console.log('=== ACTIVATING PROFILE ===');
+    
+    try {
+      const response = await api.put('/JobSeeker/Activate');
+      console.log('✅ Activate Profile API Response:', response);
+      
+      // Update the profile status locally
+      setProfile(prev => prev ? { ...prev, isActive: true } : null);
+
+      toast({
+        title: "Profile Activated!",
+        description: "Your profile is now active and visible to employers",
+      });
+    } catch (error) {
+      console.error('❌ Activate Profile API Error:', error);
+      toast({
+        title: "Activation Failed",
+        description: "There was an error activating your profile",
+        variant: "destructive",
+      });
+    } finally {
+      setActivating(false);
+    }
+  };
+
+  const handleDeactivate = async () => {
+    setActivating(true);
+    console.log('=== DEACTIVATING PROFILE ===');
+    
+    try {
+      const response = await api.put('/JobSeeker/Deactivate');
+      console.log('✅ Deactivate Profile API Response:', response);
+      
+      // Update the profile status locally
+      setProfile(prev => prev ? { ...prev, isActive: false } : null);
+
+      toast({
+        title: "Profile Deactivated",
+        description: "Your profile is now hidden from employers",
+      });
+    } catch (error) {
+      console.error('❌ Deactivate Profile API Error:', error);
+      toast({
+        title: "Deactivation Failed",
+        description: "There was an error deactivating your profile",
+        variant: "destructive",
+      });
+    } finally {
+      setActivating(false);
     }
   };
 
@@ -206,6 +272,39 @@ export const SeekerDashboard = () => {
                           <span className="text-success">Has Degree</span>
                         </div>
                       )}
+
+                      {/* Profile Status */}
+                      <div className="flex items-center space-x-2 text-sm">
+                        <div className={`w-3 h-3 rounded-full ${profile.isActive ? 'bg-success' : 'bg-muted-foreground'}`}></div>
+                        <span className={profile.isActive ? 'text-success' : 'text-muted-foreground'}>
+                          {profile.isActive ? 'Profile Active' : 'Profile Inactive'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Activation Control */}
+                    <div className="pt-4 border-t">
+                      <Button
+                        onClick={profile.isActive ? handleDeactivate : handleActivate}
+                        disabled={activating}
+                        variant={profile.isActive ? "outline" : "default"}
+                        className="w-full"
+                      >
+                        {activating ? (
+                          <>
+                            <LoadingSpinner size="sm" className="mr-2" />
+                            {profile.isActive ? 'Deactivating...' : 'Activating...'}
+                          </>
+                        ) : (
+                          profile.isActive ? 'Deactivate Profile' : 'Activate Profile'
+                        )}
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-2 text-center">
+                        {profile.isActive 
+                          ? 'Deactivating will hide your profile from employers'
+                          : 'Activating will make your profile visible to employers'
+                        }
+                      </p>
                     </div>
                   </>
                 )}
@@ -242,7 +341,7 @@ export const SeekerDashboard = () => {
                       }
                       
                       return (
-                      <Card key={offer.offersCode} className="hover-lift">
+                      <Card key={`${offer.offersCode}-${offer.isApplied}`} className="hover-lift">
                         <CardContent className="p-6">
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex-1">
@@ -253,6 +352,12 @@ export const SeekerDashboard = () => {
                                 {offer.matchingScore !== undefined && offer.matchingScore !== null && (
                                   <Badge className={getMatchScoreColor(offer.matchingScore)}>
                                     {Math.round(offer.matchingScore * 100)}% Match
+                                  </Badge>
+                                )}
+                                {/* Application Status Badge */}
+                                {offer.isApplied && (
+                                  <Badge variant="outline" className="bg-success/10 text-success border-success">
+                                    Applied
                                   </Badge>
                                 )}
                               </div>
@@ -286,6 +391,21 @@ export const SeekerDashboard = () => {
                               </div>
                             )}
                           </div>
+
+                          {/* Application Status Information */}
+                          {offer.isApplied && (
+                            <div className="mb-4 p-3 bg-success/5 border border-success/20 rounded-lg">
+                              <div className="flex items-center space-x-2 text-sm text-success">
+                                <CheckCircle className="w-4 h-4" />
+                                <span>
+                                  {offer.applicationDate 
+                                    ? `Applied on ${new Date(offer.applicationDate).toLocaleDateString()}`
+                                    : 'Application submitted'
+                                  }
+                                </span>
+                              </div>
+                            </div>
+                          )}
 
                           <div className="flex justify-end">
                             {offer.isApplied ? (
