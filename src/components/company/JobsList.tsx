@@ -18,14 +18,13 @@ interface JobsListProps {
   jobs: Job[];
   onViewCandidates: (jobCode: string, type: 'matching' | 'applied') => void;
   onMarkNoLongerSeeking: (jobCode: string) => void;
-  onCreateJob: () => void;
 }
 
 export const JobsList = ({ 
   jobs, 
   onViewCandidates, 
   onMarkNoLongerSeeking, 
-  onCreateJob 
+  // onCreateJob 
 }: JobsListProps) => {
   return (
     <>
@@ -35,7 +34,6 @@ export const JobsList = ({
             <Plus className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">No Job Postings</h3>
             <p className="text-muted-foreground mb-4">Create your first job posting to start finding candidates</p>
-            <Button onClick={onCreateJob}>Post Your First Job</Button>
           </CardContent>
         </Card>
       ) : (

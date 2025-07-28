@@ -5,9 +5,9 @@ import { api } from '@/lib/api';
 import { getUserId } from '@/lib/auth';
 import { toast } from '@/hooks/use-toast';
 import { useJobFields } from '@/hooks/use-job-fields';
-import { SeekerProfileCard } from './SeekerProfileCard';
-import { JobOffersList } from './JobOffersList';
-import { JobOfferCard } from './JobOfferCard';
+import { SeekerProfileCard } from '@/components/seeker/SeekerProfileCard';
+import { JobOffersList } from '@/components/seeker/JobOffersList';
+import { JobOfferCard } from '@/components/seeker/JobOfferCard';
 
 interface SeekerProfile {
   id: number;

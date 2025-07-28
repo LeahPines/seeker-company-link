@@ -99,23 +99,17 @@ export const JobOfferCard = ({
       )}
       <div className="flex justify-end">
         {offer.isApplied ? (
-          <Button variant="outline" disabled className="flex items-center space-x-2">
-            <CheckCircle className="w-4 h-4" />
-            <span>Applied</span>
+          <Button disabled variant="outline" className="w-32">
+            Applied
           </Button>
         ) : (
           <Button
             onClick={() => handleApplyForJob(offer.offersCode)}
-            disabled={applying === String(offer.offersCode)}
+            disabled={applying === offer.offersCode}
+            className="w-32"
           >
-            {applying === String(offer.offersCode) ? (
-              <>
-                <LoadingSpinner size="sm" className="mr-2" />
-                Applying...
-              </>
-            ) : (
-              'Apply Now'
-            )}
+            {applying === offer.offersCode ? <LoadingSpinner size="sm" className="mr-2" /> : null}
+            {applying === offer.offersCode ? 'Applying...' : 'Apply'}
           </Button>
         )}
       </div>

@@ -301,14 +301,13 @@ export const CompanyDashboard = () => {
           <div className="lg:col-span-3">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">Job Postings</h2>
-              <Button onClick={handleCreateJob}>Create Job</Button>
+              <Button onClick={handleCreateJob}>Post New Job +</Button>
             </div>
 
             <JobsList
               jobs={jobs}
               onViewCandidates={handleViewCandidates}
               onMarkNoLongerSeeking={handleMarkNoLongerSeeking}
-              onCreateJob={handleCreateJob}
             />
 
             <JobFormDialog

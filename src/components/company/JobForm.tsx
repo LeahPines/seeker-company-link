@@ -44,12 +44,6 @@ export const JobFormDialog = ({
 
   return (
     <Dialog open={showJobForm} onOpenChange={setShowJobForm}>
-      <DialogTrigger asChild>
-        <Button className="flex items-center space-x-2">
-          <Plus className="w-4 h-4" />
-          <span>Post New Job</span>
-        </Button>
-      </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Job Posting</DialogTitle>
