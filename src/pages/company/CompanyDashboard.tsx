@@ -48,6 +48,7 @@ interface Candidate {
   matchingScore?: number;
 };
 
+
 export const CompanyDashboard = () => {
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -55,9 +56,10 @@ export const CompanyDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showJobForm, setShowJobForm] = useState(false);
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
+  const [candidateType, setCandidateType] = useState<'matching' | 'applied'>('matching');
   const { countries, loading: loadingCountries } = useCountries();
   const { jobFields } = useJobFields();
-  
+
   const [jobForm, setJobForm] = useState({
     code: '',
     field: '',
@@ -96,36 +98,36 @@ export const CompanyDashboard = () => {
   };
 
   const loadCandidates = async (jobCode: string, type: 'matching' | 'applied') => {
-    try {
-      // Use the new endpoint that returns full candidate details
-      const endpoint = `/Job/GetJobOffersWithCandidates/${jobCode}`;
-      const response = await api.get(endpoint);
-      // Map API response to Candidate[]
-      const mappedCandidates = Array.isArray(response)
-        ? response.map((item: any) => ({
-            id: item.candidateId,
-            name: item.candidateName,
-            sirName: item.candidateSirName,
-            email: item.candidateEmail,
-            country: item.candidateCountry,
-            yearsOfExperience: item.candidateYearsOfExperience,
-            hasDegree: item.candidateHasDegree,
-            field: item.candidateField,
-            matchingScore: item.matchingScore,
-          }))
-        : [];
-      setCandidates(prev => ({ ...prev, [jobCode]: mappedCandidates }));
-    } catch (error) {
+  try {
+    let endpoint = '';
+    if (type === 'applied') {
+      endpoint = `/Job/GetAppliedCandidatesWithDetails/${jobCode}`;
+    } else {
+      endpoint = `/Job/GetJobOffersWithCandidates/${jobCode}`;
+    }
+    const response = await api.get(endpoint);
+    const mappedCandidates = Array.isArray(response)
+      ? response.map((item: any) => ({
+          id: item.candidateId,
+          name: item.candidateName,
+          sirName: item.candidateSirName,
+          email: item.candidateEmail,
+          country: item.candidateCountry,
+          yearsOfExperience: item.candidateYearsOfExperience,
+          hasDegree: item.candidateHasDegree,
+          field: item.candidateField,
+          matchingScore: item.matchingScore,
+        }))
+      : [];
+    setCandidates(prev => ({ ...prev, [jobCode]: mappedCandidates }));
+  } catch (error: any) {
+    if (error.status === 404) {
+      setCandidates(prev => ({ ...prev, [jobCode]: [] }));
+    } else {
       console.error(`Failed to load candidates:`, error);
     }
-  };
-// Debug: log candidate fields and jobFields when candidates or jobFields change
-  useEffect(() => {
-    if (selectedJob && candidates[selectedJob] && Array.isArray(jobFields)) {
-      console.log('Candidates for job', selectedJob, candidates[selectedJob]);
-      console.log('jobFields:', jobFields);
-    }
-  }, [selectedJob, candidates, jobFields]);
+  }
+};
   const validateJobForm = () => {
     const errors: Record<string, string> = {};
 
@@ -461,11 +463,24 @@ export const CompanyDashboard = () => {
                             variant="outline"
                             onClick={() => {
                               setSelectedJob(job.code);
+                              setCandidateType('matching');
                               loadCandidates(job.code, 'matching');
                             }}
                           >
                             <Eye className="w-4 h-4 mr-1" />
                             View Candidates
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => {
+                              setSelectedJob(job.code);
+                              setCandidateType('applied');
+                              loadCandidates(job.code, 'applied');
+                            }}
+                          >
+                            <Users className="w-4 h-4 mr-1" />
+                            View Applied Candidates
                           </Button>
                           <Button
                             size="sm"
@@ -515,17 +530,26 @@ export const CompanyDashboard = () => {
               <Dialog open={!!selectedJob} onOpenChange={() => setSelectedJob(null)}>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>Candidates for Job {selectedJob}</DialogTitle>
+                    <DialogTitle>
+                      {candidateType === 'applied'
+                        ? `Applied Candidates for Job ${selectedJob}`
+                        : `Matching Candidates for Job ${selectedJob}`}
+                    </DialogTitle>
                     <DialogDescription>
-                      Review matching candidates for this position. You can see their qualifications and match scores.
+                      {candidateType === 'applied'
+                        ? 'Review candidates who have applied for this position.'
+                        : 'Review matching candidates for this position. You can see their qualifications and match scores.'}
                     </DialogDescription>
                   </DialogHeader>
-                  
                   <div className="mt-4">
                     {candidates[selectedJob].length === 0 ? (
                       <div className="text-center py-8">
                         <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                        <p className="text-muted-foreground">No candidates found for this position</p>
+                        <p className="text-muted-foreground">
+                          {candidateType === 'applied'
+                            ? 'No candidates have applied for this position'
+                            : 'No candidates found for this position'}
+                        </p>
                       </div>
                     ) : (
                       <div className="space-y-4">
