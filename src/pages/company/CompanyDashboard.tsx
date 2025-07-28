@@ -13,7 +13,6 @@ import { getUserId } from '@/lib/auth';
 import { toast } from '@/hooks/use-toast';
 import { Building2, Plus, Users, Eye, X, MapPin, Clock, Target, GraduationCap } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
-
 import { useCountries } from '@/hooks/use-countries';
 import { useJobFields } from '@/hooks/use-job-fields';
 import { BasicCombobox } from '@/components/ui/basic-combobox';
@@ -54,11 +53,6 @@ export const CompanyDashboard = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [candidates, setCandidates] = useState<{ [jobCode: string]: Candidate[] }>({});
   const [totalApplications, setTotalApplications] = useState(0);
-  // Update total applications whenever candidates state changes
-  useEffect(() => {
-    const total = Object.values(candidates).reduce((sum, arr) => sum + (arr?.length || 0), 0);
-    setTotalApplications(total);
-  }, [candidates]);
   const [loading, setLoading] = useState(true);
   const [showJobForm, setShowJobForm] = useState(false);
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
@@ -81,24 +75,67 @@ export const CompanyDashboard = () => {
   const userId = getUserId();
 
   useEffect(() => {
+    console.log('=== DASHBOARD useEffect TRIGGERED ===');
+    console.log('Component mounted, calling loadDashboardData');
     loadDashboardData();
   }, []);
 
   const loadDashboardData = async () => {
-    if (!userId) return;
+    console.log('=== DASHBOARD LOADING DEBUG ===');
+    console.log('UserId:', userId);
+    
+    // Try to load even without userId since APIs might use token authentication
+    setLoading(true);
 
     try {
-      // Both APIs now use /api prefix and get ID from token
-      const [profileResponse, jobsResponse] = await Promise.all([
-        api.get(`/Company/GetCompanyById`),
-        api.get(`/Job/GetJobsForCompany`)
-      ]);
-
+      console.log('Making API calls...');
+      
+      // Load profile first
+      const profileResponse = await api.get(`/Company/GetCompanyById`);
+      console.log('Profile response:', profileResponse);
       setProfile(profileResponse);
+      
+      // Load jobs separately and handle 404 gracefully
+      let jobsResponse = [];
+      try {
+        jobsResponse = await api.get(`/Job/GetJobsForCompany`);
+        console.log('Jobs response:', jobsResponse);
+      } catch (jobError: any) {
+        if (jobError.status === 404) {
+          console.log('No jobs found for this company (404) - this is normal for new companies');
+          jobsResponse = [];
+        } else {
+          throw jobError; // Re-throw if it's not a 404
+        }
+      }
+
       setJobs(jobsResponse || []);
+      
+      // Load application counts for all jobs to get accurate total
+      if (jobsResponse && Array.isArray(jobsResponse) && jobsResponse.length > 0) {
+        let totalApps = 0;
+        console.log(`Loading applications for ${jobsResponse.length} jobs`);
+        for (const job of jobsResponse) {
+          try {
+            const applicationsResponse = await api.get(`/Job/GetAppliedCandidatesWithDetails/${job.code}`);
+            const count = Array.isArray(applicationsResponse) ? applicationsResponse.length : 0;
+            console.log(`Job ${job.code}: ${count} applications`);
+            totalApps += count;
+          } catch (error) {
+            // If no applications found (404), count as 0
+            console.log(`No applications found for job ${job.code}`);
+          }
+        }
+        console.log('Total applications:', totalApps);
+        setTotalApplications(totalApps);
+      } else {
+        console.log('No jobs to load applications for');
+        setTotalApplications(0);
+      }
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
     } finally {
+      console.log('Dashboard loading complete');
       setLoading(false);
     }
   };
@@ -237,7 +274,33 @@ export const CompanyDashboard = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="flex items-center justify-center pt-20">
-          <LoadingSpinner size="lg" />
+          <div className="text-center">
+            <LoadingSpinner size="lg" />
+            <p className="mt-4 text-muted-foreground">Loading company dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Add error state if no profile and not loading
+  if (!loading && !profile) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex items-center justify-center pt-20">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-4">Unable to Load Dashboard</h2>
+            <p className="text-muted-foreground mb-4">
+              There was an issue loading your company profile. Please try refreshing the page.
+            </p>
+            <Button onClick={() => {
+              setLoading(true);
+              loadDashboardData();
+            }}>
+              Retry Loading
+            </Button>
+          </div>
         </div>
       </div>
     );
