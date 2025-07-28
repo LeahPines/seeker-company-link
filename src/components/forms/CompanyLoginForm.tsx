@@ -50,6 +50,7 @@ export const CompanyLoginForm = () => {
 
       // Save auth data and role in localStorage
       const role = payload.Role || 'Company';
+      const companyName = payload.CompanyName || payload.Name || 'Company';
       const authData = {
         token,
         userId: payload.NameIdentifier?.toString() || payload.nameid?.toString() || '',
@@ -60,8 +61,8 @@ export const CompanyLoginForm = () => {
       localStorage.setItem('role', role);
       console.log('Logged in as role:', role);
       toast({
-        title: `Welcome back, ${role}!`,
-        description: "Successfully signed in to your company account. Redirecting...",
+        title: `Welcome ${companyName}!`,
+        description: "Successfully signed in to your company account.",
       });
       navigate('/company/dashboard', { replace: true });
     } catch (error: any) {

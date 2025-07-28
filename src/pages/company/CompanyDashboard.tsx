@@ -6,14 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-// Select component no longer needed, using Combobox instead
 import { Checkbox } from '@/components/ui/checkbox';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { api } from '@/lib/api';
 import { getUserId } from '@/lib/auth';
 import { toast } from '@/hooks/use-toast';
 import { Building2, Plus, Users, Eye, X, MapPin, Clock, Target, GraduationCap } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 
 import { useCountries } from '@/hooks/use-countries';
 import { useJobFields } from '@/hooks/use-job-fields';
@@ -81,9 +80,10 @@ export const CompanyDashboard = () => {
     if (!userId) return;
 
     try {
+      // Both APIs now use /api prefix and get ID from token
       const [profileResponse, jobsResponse] = await Promise.all([
-        api.get(`/GetCompanyById/${userId}`),
-        api.get(`/GetCompanyJobs/${userId}`)
+        api.get(`/Company/GetCompanyById`),
+        api.get(`/Job/GetJobsForCompany`)
       ]);
 
       setProfile(profileResponse);
@@ -98,8 +98,8 @@ export const CompanyDashboard = () => {
   const loadCandidates = async (jobCode: string, type: 'matching' | 'applied') => {
     try {
       const endpoint = type === 'matching' 
-        ? `/FindMatchingCandidates/${jobCode}`
-        : `/GetAppliedCandidatesWithCandidatesByJobCode/${jobCode}`;
+        ? `/Job/FindMatchingCandidates/${jobCode}`
+        : `/Job/GetAppliedCandidatesWithDetails/${jobCode}`;
       
       const response = await api.get(endpoint);
       setCandidates(prev => ({ ...prev, [jobCode]: response || [] }));
@@ -151,7 +151,7 @@ export const CompanyDashboard = () => {
         jobDescription: jobForm.jobDescription
       };
 
-      await api.post('/Job/Add', payload);
+      await api.post('/Job/AddJob', payload);
       
       toast({
         title: "Job Posted!",
@@ -180,7 +180,7 @@ export const CompanyDashboard = () => {
 
   const handleDeactivateJob = async (jobCode: string) => {
     try {
-      await api.delete(`/NotSeekingWorkers/${jobCode}`);
+      await api.delete(`/Job/NotSeekingWorkers/${jobCode}`);
       
       toast({
         title: "Job Deactivated",
@@ -256,7 +256,7 @@ export const CompanyDashboard = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Total Applications</span>
-                  <span className="font-semibold">{Object.values(candidates).flat().length}</span>
+                  <span className="font-semibold">{Object.values(candidates).reduce((total, candidateList) => total + (candidateList?.length || 0), 0)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -276,6 +276,9 @@ export const CompanyDashboard = () => {
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Create New Job Posting</DialogTitle>
+                    <DialogDescription>
+                      Fill out the form below to create a new job posting and start finding qualified candidates.
+                    </DialogDescription>
                   </DialogHeader>
                   
                   <form onSubmit={handleCreateJob} className="space-y-6 mt-4">
@@ -450,24 +453,28 @@ export const CompanyDashboard = () => {
                       <p className="text-foreground mb-4">{job.jobDescription}</p>
 
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div className="flex items-center space-x-2">
+                        <div key={`job-location-${job.code}`} className="flex items-center space-x-2">
                           <MapPin className="w-4 h-4 text-muted-foreground" />
                           <span>{job.country}</span>
                         </div>
-                        <div className="flex items-center space-x-2">
+                        <div key={`job-hours-${job.code}`} className="flex items-center space-x-2">
                           <Clock className="w-4 h-4 text-muted-foreground" />
                           <span>{job.workHours}h/day</span>
                         </div>
-                        <div className="flex items-center space-x-2">
+                        <div key={`job-experience-${job.code}`} className="flex items-center space-x-2">
                           <Target className="w-4 h-4 text-muted-foreground" />
                           <span>{job.minYearsExperience}+ years</span>
                         </div>
-                        {job.requiresDegree && (
-                          <div className="flex items-center space-x-2">
-                            <GraduationCap className="w-4 h-4 text-muted-foreground" />
-                            <span>Degree required</span>
-                          </div>
-                        )}
+                        <div key={`job-degree-${job.code}`} className="flex items-center space-x-2">
+                          {job.requiresDegree ? (
+                            <>
+                              <GraduationCap className="w-4 h-4 text-muted-foreground" />
+                              <span>Degree required</span>
+                            </>
+                          ) : (
+                            <span className="text-muted-foreground">No degree required</span>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -481,6 +488,9 @@ export const CompanyDashboard = () => {
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Candidates for Job {selectedJob}</DialogTitle>
+                    <DialogDescription>
+                      Review matching candidates for this position. You can see their qualifications and match scores.
+                    </DialogDescription>
                   </DialogHeader>
                   
                   <div className="mt-4">
@@ -509,23 +519,27 @@ export const CompanyDashboard = () => {
                               </div>
                               
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                                <div className="flex items-center space-x-1">
+                                <div key={`location-${candidate.id}`} className="flex items-center space-x-1">
                                   <MapPin className="w-3 h-3 text-muted-foreground" />
                                   <span>{candidate.country}</span>
                                 </div>
-                                <div className="flex items-center space-x-1">
+                                <div key={`experience-${candidate.id}`} className="flex items-center space-x-1">
                                   <Target className="w-3 h-3 text-muted-foreground" />
                                   <span>{candidate.yearsOfExperience} years</span>
                                 </div>
-                                <div className="flex items-center space-x-1">
+                                <div key={`field-${candidate.id}`} className="flex items-center space-x-1">
                                   <span>{(Array.isArray(jobFields) && jobFields.find(f => f && f.value === String(candidate.field)))?.label || 'Unknown'}</span>
                                 </div>
-                                {candidate.hasDegree && (
-                                  <div className="flex items-center space-x-1">
-                                    <GraduationCap className="w-3 h-3 text-success" />
-                                    <span className="text-success">Has Degree</span>
-                                  </div>
-                                )}
+                                <div key={`degree-${candidate.id}`} className="flex items-center space-x-1">
+                                  {candidate.hasDegree ? (
+                                    <>
+                                      <GraduationCap className="w-3 h-3 text-success" />
+                                      <span className="text-success">Has Degree</span>
+                                    </>
+                                  ) : (
+                                    <span className="text-muted-foreground">No degree</span>
+                                  )}
+                                </div>
                               </div>
                             </CardContent>
                           </Card>

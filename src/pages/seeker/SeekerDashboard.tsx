@@ -56,8 +56,8 @@ export const SeekerDashboard = () => {
 
     try {
       const [profileResponse, offersResponse] = await Promise.all([
-        api.get(`/GetJobSeekerById/${userId}`),
-        api.get(`/GetJobOffersWithJobsBySeekerId/${userId}`)
+        api.get('/JobSeeker/GetJobSeekerById'),
+        api.get('/JobSeeker/FindMatchingJobsDetailed')
       ]);
 
       setProfile(profileResponse);
@@ -72,7 +72,7 @@ export const SeekerDashboard = () => {
   const handleApplyForJob = async (offersCode: string) => {
     setApplying(offersCode);
     try {
-      await api.post(`/ApplyForOffer/${offersCode}`);
+      await api.post(`/JobSeeker/ApplyForJob/${offersCode}`);
       
       // Update the job offer status locally
       setJobOffers(prev => 
