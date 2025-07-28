@@ -148,9 +148,12 @@ export function useJobFields() {
       return [];
     }
     
+    // Use ALL job fields from the comprehensive enum
+    const allFields = JOB_FIELD_ENUM;
+    
     // Safely map through the enum
     try {
-      return JOB_FIELD_ENUM.map((field, index) => {
+      return allFields.map((field, index) => {
         // Convert from camelCase to display format
         const label = field
           .replace(/([A-Z])/g, ' $1')
