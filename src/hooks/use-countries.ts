@@ -14,7 +14,6 @@ export interface CountryOption {
 }
 
 export function useCountries() {
-  // Initialize with an empty array to prevent undefined errors
   const [countries, setCountries] = useState<CountryOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,9 +40,7 @@ export function useCountries() {
         setCountries(sortedCountries);
         setError(null);
       } catch (err) {
-        console.error('Error fetching countries:', err);
         setError('Failed to load countries. Using fallback list.');
-        // Fallback to a basic list in case the API fails
         setCountries([
           'United States', 'Canada', 'United Kingdom', 'Germany', 'France', 
           'Spain', 'Italy', 'Netherlands', 'Australia', 'New Zealand', 
@@ -57,7 +54,6 @@ export function useCountries() {
     fetchCountries();
   }, []);
 
-  // Ensure we never return undefined for countries
   return { 
     countries: countries || [], 
     loading, 

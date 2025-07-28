@@ -49,7 +49,6 @@ export const SeekerDashboard = () => {
   const userId = getUserId();
   const { jobFields } = useJobFields();
 
-  // Helper function to get field name by index
   const getFieldName = (fieldIndex: number) => {
     return jobFields.find(field => field.value === fieldIndex.toString())?.label || 'Unknown Field';
   };
@@ -62,37 +61,23 @@ export const SeekerDashboard = () => {
     if (!userId) return;
 
     try {
-      const [profileResponse, offersResponse] = await Promise.all([
-        api.get('/JobSeeker/GetJobSeekerById'),
-        api.get('/JobSeeker/FindMatchingJobsDetailed')
-      ]);
-
+      const profileResponse = await api.get('/JobSeeker/GetJobSeekerById');
       setProfile(profileResponse);
-      setJobOffers(offersResponse || []);
       
-      // API Response Analysis
-      console.log('=== API RESPONSE ANALYSIS ===');
-      console.log('Profile API Response Status: SUCCESS');
-      console.log('Profile Data Type:', typeof profileResponse);
-      console.log('Profile Keys:', profileResponse ? Object.keys(profileResponse) : 'null');
-      
-      console.log('Job Offers API Response Status: SUCCESS');
-      console.log('Job Offers Data Type:', typeof offersResponse);
-      console.log('Job Offers Is Array:', Array.isArray(offersResponse));
-      console.log('Job Offers Length:', offersResponse?.length || 0);
-      
-      if (offersResponse && offersResponse.length > 0) {
-        console.log('First Job Offer Keys:', Object.keys(offersResponse[0]));
-        console.log('Sample Job Data:', offersResponse[0]);
-      } else {
-        console.warn('⚠️ NO JOB OFFERS RETURNED FROM BACKEND - This might indicate:');
-        console.warn('1. No jobs in database');
-        console.warn('2. Backend API not working properly');
-        console.warn('3. Database connection issues');
-        console.warn('4. Matching algorithm returning empty results');
+      try {
+        const offersResponse = await api.get('/JobSeeker/FindMatchingJobsDetailed');
+        setJobOffers(offersResponse || []);
+        
+      } catch (jobError: any) {
+        if (jobError.status === 404) {
+          setJobOffers([]);
+        } else {
+          setJobOffers([]);
+        }
       }
+      
     } catch (error) {
-      console.error('Failed to load dashboard data:', error);
+      setJobOffers([]);
     } finally {
       setLoading(false);
     }
@@ -100,30 +85,22 @@ export const SeekerDashboard = () => {
 
   const handleApplyForJob = async (offersCode: string | number) => {
     setApplying(String(offersCode));
-    console.log('=== APPLYING FOR JOB ===');
-    console.log('Offers Code:', offersCode, 'Type:', typeof offersCode);
-    console.log('Using PUT method (as per backend controller)');
     
     try {
       const response = await api.put(`/JobSeeker/ApplyForJob/${offersCode}`);
-      console.log('✅ Apply Job API Response:', response);
       
-      // Find the specific offer to check current state
       const currentOffer = jobOffers.find(offer => String(offer.offersCode) === String(offersCode));
-      console.log('Current offer before update:', currentOffer);
       
-      // Update the job offer status locally
       setJobOffers(prev => {
         const updatedOffers = prev.map(offer => 
           String(offer.offersCode) === String(offersCode) 
             ? { 
                 ...offer, 
                 isApplied: true,
-                applicationDate: new Date().toISOString() // Set current date as application date
+                applicationDate: new Date().toISOString() 
               }
             : offer
         );
-        console.log('Updated job offers after apply:', updatedOffers);
         return updatedOffers;
       });
 
@@ -132,7 +109,6 @@ export const SeekerDashboard = () => {
         description: "Your application has been sent to the company",
       });
     } catch (error) {
-      console.error('❌ Apply Job API Error:', error);
       toast({
         title: "Application Failed",
         description: "There was an error submitting your application",
@@ -145,13 +121,10 @@ export const SeekerDashboard = () => {
 
   const handleActivate = async () => {
     setActivating(true);
-    console.log('=== ACTIVATING PROFILE ===');
     
     try {
       const response = await api.put('/JobSeeker/Activate');
-      console.log('✅ Activate Profile API Response:', response);
       
-      // Update the profile status locally
       setProfile(prev => prev ? { ...prev, isActive: true } : null);
 
       toast({
@@ -159,7 +132,6 @@ export const SeekerDashboard = () => {
         description: "Your profile is now active and visible to employers",
       });
     } catch (error) {
-      console.error('❌ Activate Profile API Error:', error);
       toast({
         title: "Activation Failed",
         description: "There was an error activating your profile",
@@ -172,13 +144,10 @@ export const SeekerDashboard = () => {
 
   const handleDeactivate = async () => {
     setActivating(true);
-    console.log('=== DEACTIVATING PROFILE ===');
     
     try {
       const response = await api.put('/JobSeeker/Deactivate');
-      console.log('✅ Deactivate Profile API Response:', response);
       
-      // Update the profile status locally
       setProfile(prev => prev ? { ...prev, isActive: false } : null);
 
       toast({
@@ -186,7 +155,6 @@ export const SeekerDashboard = () => {
         description: "Your profile is now hidden from employers",
       });
     } catch (error) {
-      console.error('❌ Deactivate Profile API Error:', error);
       toast({
         title: "Deactivation Failed",
         description: "There was an error deactivating your profile",
@@ -198,7 +166,7 @@ export const SeekerDashboard = () => {
   };
 
   const getMatchScoreColor = (score: number) => {
-    const percentage = score * 100; // Convert decimal to percentage
+    const percentage = score * 100; 
     if (percentage >= 80) return 'bg-success text-success-foreground';
     if (percentage >= 60) return 'bg-warning text-warning-foreground';
     return 'bg-muted text-muted-foreground';
@@ -331,12 +299,8 @@ export const SeekerDashboard = () => {
                 ) : (
                   <div className="space-y-4">
                     {jobOffers.map((offer) => {
-                      // Debug logging for each offer
-                      console.log('Rendering offer:', offer);
                       
-                      // Skip rendering if essential fields are missing
                       if (!offer.offersCode) {
-                        console.warn('Skipping offer with missing code:', offer);
                         return null;
                       }
                       

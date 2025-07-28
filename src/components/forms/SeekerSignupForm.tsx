@@ -95,7 +95,6 @@ export const SeekerSignupForm = () => {
 
     setLoading(true);
     try {
-      // Match the backend DTO exactly
       const payload = {
         Id: Number(formData.id),
         Name: formData.name.trim(),
@@ -103,17 +102,12 @@ export const SeekerSignupForm = () => {
         Email: formData.email.trim(),
         Password: formData.password,
         Country: formData.country.trim(),
-        DailyWorkHours: Number(formData.dailyWorkHours), // Double/float as expected by backend
+        DailyWorkHours: Number(formData.dailyWorkHours),
         YearsOfExperience: Number(formData.yearsOfExperience),
         HasDegree: Boolean(formData.hasDegree),
-        Field: Number(formData.field) // JobField enum value (0-130)
+        Field: Number(formData.field)
       };
 
-      console.log('=== SIGNUP PAYLOAD DEBUG ===');
-      console.log('Selected field index:', formData.field);
-      console.log('Selected field name:', jobFields.find(f => f.value === formData.field.toString())?.label);
-      console.log('Total available fields:', jobFields.length);
-      console.log('Payload being sent:', payload);
 
       const response = await api.post('/Auth/SignUpJobSeeker', payload);
 
@@ -122,14 +116,12 @@ export const SeekerSignupForm = () => {
         description: "Welcome! Redirecting to jobs...",
       });
 
-      // Save full auth state if token returned
       if (response && response.token) {
         let role: 'JobSeeker' = 'JobSeeker';
         let userId = '';
         let email = formData.email;
         try {
           const payload = JSON.parse(atob(response.token.split('.')[1]));
-          // Only allow 'JobSeeker' for signup
           userId = payload.NameIdentifier?.toString() || payload.nameid?.toString() || '';
           email = payload.Email || formData.email;
         } catch {}
@@ -143,15 +135,11 @@ export const SeekerSignupForm = () => {
         localStorage.setItem('role', role);
         localStorage.setItem('userId', userId);
         localStorage.setItem('email', email);
-        // Update global auth state immediately
         saveAuthData(authData);
-        console.log('Signed up as:', authData);
       }
       navigate('/seeker/dashboard', { replace: true });
     } catch (error: any) {
-      console.error('Signup error:', error);
       if (error.status === 400) {
-        // Handle validation errors from backend
         setErrors({ general: error.message || 'Validation failed' });
         toast({
           title: "Validation Error",

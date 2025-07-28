@@ -5,7 +5,6 @@ export interface JobFieldOption {
   label: string;
 }
 
-// This maps to your backend JobField enum
 const JOB_FIELD_ENUM = [
   'SoftwareDevelopment',
   'DataScience',
@@ -141,36 +140,29 @@ const JOB_FIELD_ENUM = [
 ];
 
 export function useJobFields() {
-  // Default to empty array in the useMemo to ensure we never have undefined
   const jobFields = useMemo(() => {
-    // Early return with empty array if JOB_FIELD_ENUM is not valid
     if (!Array.isArray(JOB_FIELD_ENUM) || JOB_FIELD_ENUM.length === 0) {
       return [];
     }
     
-    // Use ALL job fields from the comprehensive enum
     const allFields = JOB_FIELD_ENUM;
     
-    // Safely map through the enum
     try {
       return allFields.map((field, index) => {
-        // Convert from camelCase to display format
         const label = field
           .replace(/([A-Z])/g, ' $1')
           .replace(/^./, str => str.toUpperCase())
           .trim();
         
         return {
-          value: index.toString(), // Enum index as string
+          value: index.toString(), 
           label
         };
       });
     } catch (error) {
-      console.error("Error mapping job fields:", error);
       return [];
     }
   }, []);
 
-  // Double ensure we never return undefined
   return { jobFields: Array.isArray(jobFields) ? jobFields : [] };
 }
