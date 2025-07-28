@@ -25,7 +25,7 @@ export const SeekerSignupForm = () => {
   const { countries, loading: loadingCountries } = useCountries();
   const { jobFields } = useJobFields();
   const [formData, setFormData] = useState({
-    id: 0,
+    id: '',
     name: '',
     sirName: '',
     email: '',
@@ -41,24 +41,48 @@ export const SeekerSignupForm = () => {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
+    if (!formData.id) newErrors.id = 'ID is required';
+    else {
+      const id = parseInt(formData.id);
+      if (isNaN(id) || id <= 0) newErrors.id = 'ID must be a positive integer';
+    }
+    
     if (!formData.name.trim()) newErrors.name = 'Name is required';
+    else if (formData.name.trim().length < 2) newErrors.name = 'Name must be at least 2 characters';
+    else if (formData.name.trim().length > 50) newErrors.name = 'Name must be at most 50 characters';
+    
     if (!formData.sirName.trim()) newErrors.sirName = 'Surname is required';
+    else if (formData.sirName.trim().length < 2) newErrors.sirName = 'Surname must be at least 2 characters';
+    else if (formData.sirName.trim().length > 50) newErrors.sirName = 'Surname must be at most 50 characters';
+    
     if (!formData.email.trim()) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email format';
+    else if (formData.email.length > 50) newErrors.email = 'Email must be at most 50 characters';
+    
     if (!formData.password) newErrors.password = 'Password is required';
     else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    else if (formData.password.length > 100) newErrors.password = 'Password must be at most 100 characters';
+    
     if (!formData.country) newErrors.country = 'Country is required';
+    else if (formData.country.length > 50) newErrors.country = 'Country must be at most 50 characters';
+    
     if (!formData.dailyWorkHours) newErrors.dailyWorkHours = 'Daily work hours is required';
     else {
-      const hours = parseInt(formData.dailyWorkHours);
+      const hours = parseFloat(formData.dailyWorkHours);
       if (isNaN(hours) || hours < 0 || hours > 24) newErrors.dailyWorkHours = 'Must be between 0-24 hours';
     }
+    
     if (!formData.yearsOfExperience) newErrors.yearsOfExperience = 'Years of experience is required';
     else {
       const years = parseInt(formData.yearsOfExperience);
       if (isNaN(years) || years < 0 || years > 100) newErrors.yearsOfExperience = 'Must be between 0-100 years';
     }
+    
     if (!formData.field) newErrors.field = 'Field is required';
+    else {
+      const fieldValue = parseInt(formData.field);
+      if (isNaN(fieldValue) || fieldValue < 0 || fieldValue > 130) newErrors.field = 'Invalid field selection';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -71,18 +95,18 @@ export const SeekerSignupForm = () => {
 
     setLoading(true);
     try {
-      // Ensure field is a number and use correct endpoint
+      // Match the backend DTO exactly
       const payload = {
-        id: Number(formData.id),
-        name: formData.name.trim(),
-        sirName: formData.sirName.trim(),
-        email: formData.email.trim(),
-        password: formData.password,
-        country: formData.country.trim(),
-        dailyWorkHours: Number(formData.dailyWorkHours),
-        yearsOfExperience: Number(formData.yearsOfExperience),
-        hasDegree: Boolean(formData.hasDegree),
-        field: Number(formData.field)
+        Id: Number(formData.id),
+        Name: formData.name.trim(),
+        SirName: formData.sirName.trim(),
+        Email: formData.email.trim(),
+        Password: formData.password,
+        Country: formData.country.trim(),
+        DailyWorkHours: Number(formData.dailyWorkHours), // Double/float as expected by backend
+        YearsOfExperience: Number(formData.yearsOfExperience),
+        HasDegree: Boolean(formData.hasDegree),
+        Field: Number(formData.field) // JobField enum value (0-130)
       };
 
       console.log('=== SIGNUP PAYLOAD DEBUG ===');
@@ -125,9 +149,21 @@ export const SeekerSignupForm = () => {
       }
       navigate('/seeker/dashboard', { replace: true });
     } catch (error: any) {
+      console.error('Signup error:', error);
       if (error.status === 400) {
         // Handle validation errors from backend
         setErrors({ general: error.message || 'Validation failed' });
+        toast({
+          title: "Validation Error",
+          description: error.message || 'Please check your form data and try again',
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Signup Failed",
+          description: error.message || 'An error occurred during signup',
+          variant: "destructive",
+        });
       }
     } finally {
       setLoading(false);
@@ -279,7 +315,8 @@ export const SeekerSignupForm = () => {
                   type="number"
                   min="0"
                   max="24"
-                  placeholder="e.g., 8"
+                  step="0.5"
+                  placeholder="e.g., 8 or 8.5"
                   value={formData.dailyWorkHours}
                   onChange={(e) => handleInputChange('dailyWorkHours', e.target.value)}
                   className={errors.dailyWorkHours ? 'border-destructive' : ''}
@@ -311,6 +348,12 @@ export const SeekerSignupForm = () => {
               />
               <Label htmlFor="hasDegree">I have a degree</Label>
             </div>
+
+            {errors.general && (
+              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <p className="text-sm text-destructive">{errors.general}</p>
+              </div>
+            )}
 
             <div className="flex flex-col space-y-4">
               <Button type="submit" disabled={loading} className="w-full">

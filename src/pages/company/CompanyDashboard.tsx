@@ -213,20 +213,20 @@ export const CompanyDashboard = () => {
     }
   };
 
-  const handleDeactivateJob = async (jobCode: string) => {
+  const handleMarkNoLongerSeeking = async (jobCode: string) => {
     try {
       await api.delete(`/Job/NotSeekingWorkers/${jobCode}`);
       
       toast({
-        title: "Job Deactivated",
-        description: "The job posting has been removed",
+        title: "Job Marked as No Longer Seeking",
+        description: "The job posting has been removed from active listings",
       });
 
       setJobs(prev => prev.filter(job => job.code !== jobCode));
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to deactivate job",
+        description: "Failed to mark job as no longer seeking",
         variant: "destructive",
       });
     }
@@ -491,10 +491,10 @@ export const CompanyDashboard = () => {
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => handleDeactivateJob(job.code)}
+                            onClick={() => handleMarkNoLongerSeeking(job.code)}
                           >
                             <X className="w-4 h-4 mr-1" />
-                            Deactivate
+                            No Longer Seeking
                           </Button>
                         </div>
                       </div>

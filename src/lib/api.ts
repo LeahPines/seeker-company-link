@@ -73,7 +73,25 @@ export const createApiClient = () => {
           url: response.url,
           errorData
         });
-        throw new ApiError(response.status, errorData.message || 'Request failed');
+        
+        // Handle validation errors from ASP.NET Core
+        if (errorData.errors && typeof errorData.errors === 'object') {
+          console.log('Validation Errors:', errorData.errors);
+          // Extract all validation messages
+          const allErrors = [];
+          for (const field in errorData.errors) {
+            const fieldErrors = errorData.errors[field];
+            if (Array.isArray(fieldErrors)) {
+              allErrors.push(...fieldErrors.map(err => `${field}: ${err}`));
+            } else {
+              allErrors.push(`${field}: ${fieldErrors}`);
+            }
+          }
+          const validationMessages = allErrors.join('; ');
+          throw new ApiError(response.status, validationMessages || 'Validation failed');
+        }
+        
+        throw new ApiError(response.status, errorData.message || errorData.title || 'Request failed');
       }
 
       // Handle responses that might not have JSON content
