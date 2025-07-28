@@ -53,6 +53,12 @@ export const CompanyDashboard = () => {
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [candidates, setCandidates] = useState<{ [jobCode: string]: Candidate[] }>({});
+  const [totalApplications, setTotalApplications] = useState(0);
+  // Update total applications whenever candidates state changes
+  useEffect(() => {
+    const total = Object.values(candidates).reduce((sum, arr) => sum + (arr?.length || 0), 0);
+    setTotalApplications(total);
+  }, [candidates]);
   const [loading, setLoading] = useState(true);
   const [showJobForm, setShowJobForm] = useState(false);
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
@@ -285,7 +291,7 @@ export const CompanyDashboard = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Total Applications</span>
-                  <span className="font-semibold">{Object.values(candidates).reduce((total, candidateList) => total + (candidateList?.length || 0), 0)}</span>
+                  <span className="font-semibold">{totalApplications}</span>
                 </div>
               </CardContent>
             </Card>
