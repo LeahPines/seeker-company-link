@@ -12,30 +12,18 @@ import { toast } from '@/hooks/use-toast';
 import { saveAuthData } from '@/lib/auth';
 import { Search } from 'lucide-react';
 import { useCountries } from '@/hooks/use-countries';
+import { useJobFields } from '@/hooks/use-job-fields';
 
 const COUNTRIES = [
   'United States', 'Canada', 'United Kingdom', 'Germany', 'France', 'Spain', 'Italy',
   'Netherlands', 'Australia', 'New Zealand', 'Singapore', 'India', 'Brazil', 'Mexico'
 ];
 
-const JOB_FIELDS = [
-  { value: '0', label: 'Technology' },
-  { value: '1', label: 'Healthcare' },
-  { value: '2', label: 'Finance' },
-  { value: '3', label: 'Education' },
-  { value: '4', label: 'Marketing' },
-  { value: '5', label: 'Sales' },
-  { value: '6', label: 'Engineering' },
-  { value: '7', label: 'Design' },
-  { value: '8', label: 'Operations' },
-  { value: '9', label: 'Human Resources' }
-];
-
 export const SeekerSignupForm = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const { countries, loading: loadingCountries } = useCountries();
-  const jobFields = JOB_FIELDS;
+  const { jobFields } = useJobFields();
   const [formData, setFormData] = useState({
     id: 0,
     name: '',
@@ -96,6 +84,12 @@ export const SeekerSignupForm = () => {
         hasDegree: Boolean(formData.hasDegree),
         field: Number(formData.field)
       };
+
+      console.log('=== SIGNUP PAYLOAD DEBUG ===');
+      console.log('Selected field index:', formData.field);
+      console.log('Selected field name:', jobFields.find(f => f.value === formData.field.toString())?.label);
+      console.log('Total available fields:', jobFields.length);
+      console.log('Payload being sent:', payload);
 
       const response = await api.post('/Auth/SignUpJobSeeker', payload);
 
@@ -266,7 +260,7 @@ export const SeekerSignupForm = () => {
                 <Label>Field</Label>
                 <div className={errors.field ? 'border rounded-md border-destructive' : ''}>
                   <BasicCombobox
-                    options={Array.isArray(jobFields) ? jobFields : []}
+                    options={jobFields}
                     value={formData.field.toString()}
                     onValueChange={(value) => handleInputChange('field', value)}
                     placeholder="Select field"

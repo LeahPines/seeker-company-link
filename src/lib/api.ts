@@ -66,10 +66,24 @@ export const createApiClient = () => {
         }
 
         const errorData = await response.json().catch(() => ({}));
+        console.log('API Error Response:', errorData);
+        console.log('Full error details:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: response.url,
+          errorData
+        });
         throw new ApiError(response.status, errorData.message || 'Request failed');
       }
 
-      return await response.json();
+      // Handle responses that might not have JSON content
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return await response.json();
+      } else {
+        // For successful responses without JSON content, return a success indicator
+        return { success: true };
+      }
     } catch (error) {
       if (error instanceof ApiError) {
         throw error;

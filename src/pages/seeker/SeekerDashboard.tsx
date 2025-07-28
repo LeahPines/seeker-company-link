@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { getUserId } from '@/lib/auth';
 import { toast } from '@/hooks/use-toast';
 import { User, MapPin, Clock, GraduationCap, Briefcase, Target, CheckCircle } from 'lucide-react';
+import { useJobFields } from '@/hooks/use-job-fields';
 
 interface SeekerProfile {
   id: number;
@@ -23,21 +24,19 @@ interface SeekerProfile {
 
 interface JobOffer {
   offersCode: string;
+  jobCode: number;
   jobDescription: string;
   matchingScore: number;
   isApplied: boolean;
+  applicationDate: string | null;
+  jobCompanyId: number;
   companyName?: string;
-  field: number;
-  country: string;
-  workHours: number;
-  minYearsExperience: number;
-  requiresDegree: boolean;
+  jobField: number;
+  jobCountry: string;
+  jobWorkHours: number;
+  jobMinYearsExperience: number;
+  jobRequiresDegree: boolean;
 }
-
-const FIELD_NAMES = [
-  'Technology', 'Healthcare', 'Finance', 'Education', 'Marketing',
-  'Sales', 'Engineering', 'Design', 'Operations', 'Human Resources'
-];
 
 export const SeekerDashboard = () => {
   const [profile, setProfile] = useState<SeekerProfile | null>(null);
@@ -46,6 +45,12 @@ export const SeekerDashboard = () => {
   const [applying, setApplying] = useState<string | null>(null);
 
   const userId = getUserId();
+  const { jobFields } = useJobFields();
+
+  // Helper function to get field name by index
+  const getFieldName = (fieldIndex: number) => {
+    return jobFields.find(field => field.value === fieldIndex.toString())?.label || 'Unknown Field';
+  };
 
   useEffect(() => {
     loadDashboardData();
@@ -62,6 +67,28 @@ export const SeekerDashboard = () => {
 
       setProfile(profileResponse);
       setJobOffers(offersResponse || []);
+      
+      // API Response Analysis
+      console.log('=== API RESPONSE ANALYSIS ===');
+      console.log('Profile API Response Status: SUCCESS');
+      console.log('Profile Data Type:', typeof profileResponse);
+      console.log('Profile Keys:', profileResponse ? Object.keys(profileResponse) : 'null');
+      
+      console.log('Job Offers API Response Status: SUCCESS');
+      console.log('Job Offers Data Type:', typeof offersResponse);
+      console.log('Job Offers Is Array:', Array.isArray(offersResponse));
+      console.log('Job Offers Length:', offersResponse?.length || 0);
+      
+      if (offersResponse && offersResponse.length > 0) {
+        console.log('First Job Offer Keys:', Object.keys(offersResponse[0]));
+        console.log('Sample Job Data:', offersResponse[0]);
+      } else {
+        console.warn('⚠️ NO JOB OFFERS RETURNED FROM BACKEND - This might indicate:');
+        console.warn('1. No jobs in database');
+        console.warn('2. Backend API not working properly');
+        console.warn('3. Database connection issues');
+        console.warn('4. Matching algorithm returning empty results');
+      }
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
     } finally {
@@ -69,15 +96,20 @@ export const SeekerDashboard = () => {
     }
   };
 
-  const handleApplyForJob = async (offersCode: string) => {
-    setApplying(offersCode);
+  const handleApplyForJob = async (offersCode: string | number) => {
+    setApplying(String(offersCode));
+    console.log('=== APPLYING FOR JOB ===');
+    console.log('Offers Code:', offersCode);
+    console.log('Using PUT method (as per backend controller)');
+    
     try {
-      await api.post(`/JobSeeker/ApplyForJob/${offersCode}`);
+      const response = await api.put(`/JobSeeker/ApplyForJob/${offersCode}`);
+      console.log('✅ Apply Job API Response:', response);
       
       // Update the job offer status locally
       setJobOffers(prev => 
         prev.map(offer => 
-          offer.offersCode === offersCode 
+          offer.offersCode === String(offersCode) 
             ? { ...offer, isApplied: true }
             : offer
         )
@@ -88,6 +120,7 @@ export const SeekerDashboard = () => {
         description: "Your application has been sent to the company",
       });
     } catch (error) {
+      console.error('❌ Apply Job API Error:', error);
       toast({
         title: "Application Failed",
         description: "There was an error submitting your application",
@@ -99,8 +132,9 @@ export const SeekerDashboard = () => {
   };
 
   const getMatchScoreColor = (score: number) => {
-    if (score >= 80) return 'bg-success text-success-foreground';
-    if (score >= 60) return 'bg-warning text-warning-foreground';
+    const percentage = score * 100; // Convert decimal to percentage
+    if (percentage >= 80) return 'bg-success text-success-foreground';
+    if (percentage >= 60) return 'bg-warning text-warning-foreground';
     return 'bg-muted text-muted-foreground';
   };
 
@@ -153,7 +187,7 @@ export const SeekerDashboard = () => {
 
                       <div className="flex items-center space-x-2 text-sm">
                         <Briefcase className="w-4 h-4 text-muted-foreground" />
-                        <span>{FIELD_NAMES[profile.field] || 'Unknown Field'}</span>
+                        <span>{getFieldName(profile.field)}</span>
                       </div>
 
                       <div className="flex items-center space-x-2 text-sm">
@@ -197,18 +231,30 @@ export const SeekerDashboard = () => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {jobOffers.map((offer) => (
+                    {jobOffers.map((offer) => {
+                      // Debug logging for each offer
+                      console.log('Rendering offer:', offer);
+                      
+                      // Skip rendering if essential fields are missing
+                      if (!offer.offersCode) {
+                        console.warn('Skipping offer with missing code:', offer);
+                        return null;
+                      }
+                      
+                      return (
                       <Card key={offer.offersCode} className="hover-lift">
                         <CardContent className="p-6">
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex-1">
                               <div className="flex items-center space-x-3 mb-2">
                                 <h3 className="font-semibold text-lg">
-                                  {FIELD_NAMES[offer.field]} Position
+                                  {getFieldName(offer.jobField)} Position
                                 </h3>
-                                <Badge className={getMatchScoreColor(offer.matchingScore)}>
-                                  {offer.matchingScore}% Match
-                                </Badge>
+                                {offer.matchingScore !== undefined && offer.matchingScore !== null && (
+                                  <Badge className={getMatchScoreColor(offer.matchingScore)}>
+                                    {Math.round(offer.matchingScore * 100)}% Match
+                                  </Badge>
+                                )}
                               </div>
                               {offer.companyName && (
                                 <p className="text-muted-foreground mb-3">{offer.companyName}</p>
@@ -217,23 +263,23 @@ export const SeekerDashboard = () => {
                           </div>
 
                           <p className="text-foreground mb-4 leading-relaxed">
-                            {offer.jobDescription}
+                            {offer.jobDescription || 'No job description available'}
                           </p>
 
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
                             <div className="flex items-center space-x-2">
                               <MapPin className="w-4 h-4 text-muted-foreground" />
-                              <span>{offer.country}</span>
+                              <span>{offer.jobCountry || 'Location not specified'}</span>
                             </div>
                             <div className="flex items-center space-x-2">
                               <Clock className="w-4 h-4 text-muted-foreground" />
-                              <span>{offer.workHours}h/day</span>
+                              <span>{offer.jobWorkHours || 0}h/day</span>
                             </div>
                             <div className="flex items-center space-x-2">
                               <Target className="w-4 h-4 text-muted-foreground" />
-                              <span>{offer.minYearsExperience}+ years</span>
+                              <span>{offer.jobMinYearsExperience || 0}+ years</span>
                             </div>
-                            {offer.requiresDegree && (
+                            {offer.jobRequiresDegree && (
                               <div className="flex items-center space-x-2">
                                 <GraduationCap className="w-4 h-4 text-muted-foreground" />
                                 <span>Degree required</span>
@@ -250,9 +296,9 @@ export const SeekerDashboard = () => {
                             ) : (
                               <Button
                                 onClick={() => handleApplyForJob(offer.offersCode)}
-                                disabled={applying === offer.offersCode}
+                                disabled={applying === String(offer.offersCode)}
                               >
-                                {applying === offer.offersCode ? (
+                                {applying === String(offer.offersCode) ? (
                                   <>
                                     <LoadingSpinner size="sm" className="mr-2" />
                                     Applying...
@@ -265,7 +311,8 @@ export const SeekerDashboard = () => {
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>

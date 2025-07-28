@@ -129,14 +129,23 @@ export const CompanyDashboard = () => {
   const validateJobForm = () => {
     const errors: Record<string, string> = {};
 
+    // Job code must be a valid positive integer (per backend DTO)
     if (!jobForm.code.trim()) errors.code = 'Job code is required';
+    else {
+      const codeNum = parseInt(jobForm.code);
+      if (isNaN(codeNum) || codeNum < 1) errors.code = 'Job code must be a positive integer';
+    }
+    
     if (!jobForm.field) errors.field = 'Field is required';
     if (!jobForm.country) errors.country = 'Country is required';
+    
+    // Work hours must be a double between 0.1 and 24 (per backend DTO)
     if (!jobForm.workHours) errors.workHours = 'Work hours is required';
     else {
-      const hours = parseInt(jobForm.workHours);
-      if (isNaN(hours) || hours < 1 || hours > 24) errors.workHours = 'Must be between 1-24 hours';
+      const hours = parseFloat(jobForm.workHours);
+      if (isNaN(hours) || hours < 0.1 || hours > 24) errors.workHours = 'Must be between 0.1-24 hours';
     }
+    
     if (!jobForm.minYearsExperience) errors.minYearsExperience = 'Minimum experience is required';
     else {
       const years = parseInt(jobForm.minYearsExperience);
@@ -155,16 +164,13 @@ export const CompanyDashboard = () => {
 
     setSubmitting(true);
     try {
-      // Ensure field is a valid number or default to 0
-      const fieldValue = jobForm.field ? parseInt(jobForm.field) : 0;
-      
+      // Match backend DTO requirements exactly
       const payload = {
-        code: jobForm.code,
-        companyId: userId,
-        field: fieldValue, // Now safely parsed
+        code: parseInt(jobForm.code),  // Backend expects int, not string
+        field: parseInt(jobForm.field) || 0,  // Backend expects JobField enum (int)
         country: jobForm.country,
-        workHours: parseInt(jobForm.workHours),
-        minYearsExperience: parseInt(jobForm.minYearsExperience),
+        workHours: parseFloat(jobForm.workHours) || 0,  // Backend expects double
+        minYearsExperience: parseInt(jobForm.minYearsExperience) || 0,
         requiresDegree: jobForm.requiresDegree,
         jobDescription: jobForm.jobDescription
       };
@@ -188,8 +194,11 @@ export const CompanyDashboard = () => {
       });
       loadDashboardData();
     } catch (error: any) {
-      if (error.status === 400) {
-        setJobFormErrors({ general: error.message || 'Validation failed' });
+      console.error('Job creation error:', error);
+      if (error.status === 400 && error.message) {
+        setJobFormErrors({ general: error.message });
+      } else {
+        setJobFormErrors({ general: 'Failed to create job. Please try again.' });
       }
     } finally {
       setSubmitting(false);
@@ -354,8 +363,9 @@ export const CompanyDashboard = () => {
                         <Input
                           id="workHours"
                           type="number"
-                          min="1"
+                          min="0.1"
                           max="24"
+                          step="0.1"
                           value={jobForm.workHours}
                           onChange={(e) => setJobForm(prev => ({ ...prev, workHours: e.target.value }))}
                           className={jobFormErrors.workHours ? 'border-destructive' : ''}
@@ -531,7 +541,7 @@ export const CompanyDashboard = () => {
                                 </div>
                                 {candidate.matchingScore !== undefined && (
                                   <Badge className="bg-primary/10 text-primary">
-                                    {candidate.matchingScore}% Match
+                                    {Math.round(candidate.matchingScore * 100)}% Match
                                   </Badge>
                                 )}
                               </div>
@@ -543,6 +553,7 @@ export const CompanyDashboard = () => {
                                 <div key={`experience-${candidate.id}`} className="flex items-center space-x-1">
                                   <Target className="w-3 h-3 text-muted-foreground" />
                                   <span>{candidate.yearsOfExperience} years</span>
+                                </div>
                                 <div key={`field-${candidate.id}`} className="flex items-center space-x-1">
                                   <span>
                                     {(() => {
