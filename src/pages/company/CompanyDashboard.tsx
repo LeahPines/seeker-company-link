@@ -97,19 +97,35 @@ export const CompanyDashboard = () => {
 
   const loadCandidates = async (jobCode: string, type: 'matching' | 'applied') => {
     try {
-      let endpoint = '';
-      if (type === 'matching') {
-        endpoint = `/Job/FindMatchingCandidates/${jobCode}`;
-      } else {
-        endpoint = `/Job/GetAppliedCandidatesWithDetails/${jobCode}`;
-      }
+      // Use the new endpoint that returns full candidate details
+      const endpoint = `/Job/GetJobOffersWithCandidates/${jobCode}`;
       const response = await api.get(endpoint);
-      setCandidates(prev => ({ ...prev, [jobCode]: response || [] }));
+      // Map API response to Candidate[]
+      const mappedCandidates = Array.isArray(response)
+        ? response.map((item: any) => ({
+            id: item.candidateId,
+            name: item.candidateName,
+            sirName: item.candidateSirName,
+            email: item.candidateEmail,
+            country: item.candidateCountry,
+            yearsOfExperience: item.candidateYearsOfExperience,
+            hasDegree: item.candidateHasDegree,
+            field: item.candidateField,
+            matchingScore: item.matchingScore,
+          }))
+        : [];
+      setCandidates(prev => ({ ...prev, [jobCode]: mappedCandidates }));
     } catch (error) {
-      console.error(`Failed to load ${type} candidates:`, error);
+      console.error(`Failed to load candidates:`, error);
     }
   };
-
+// Debug: log candidate fields and jobFields when candidates or jobFields change
+  useEffect(() => {
+    if (selectedJob && candidates[selectedJob] && Array.isArray(jobFields)) {
+      console.log('Candidates for job', selectedJob, candidates[selectedJob]);
+      console.log('jobFields:', jobFields);
+    }
+  }, [selectedJob, candidates, jobFields]);
   const validateJobForm = () => {
     const errors: Record<string, string> = {};
 
@@ -509,7 +525,6 @@ export const CompanyDashboard = () => {
                                   </Badge>
                                 )}
                               </div>
-                              
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                                 <div className="flex items-center space-x-1">
                                   <MapPin className="w-3 h-3 text-muted-foreground" />
@@ -520,7 +535,16 @@ export const CompanyDashboard = () => {
                                   <span>{candidate.yearsOfExperience} years</span>
                                 </div>
                                 <div className="flex items-center space-x-1">
-                                  <span>{(Array.isArray(jobFields) && jobFields.find(f => f && f.value === String(candidate.field)))?.label || 'Unknown'}</span>
+                                  <span>
+                                    {(() => {
+                                      if (Array.isArray(jobFields)) {
+                                        const found = jobFields.find(f => f && (String(f.value) === String(candidate.field) || Number(f.value) === Number(candidate.field)));
+                                        if (found && found.label) return found.label;
+                                      }
+                                      // Show the field value for debugging
+                                      return `Unknown (field: ${candidate.field})`;
+                                    })()}
+                                  </span>
                                 </div>
                                 {candidate.hasDegree && (
                                   <div className="flex items-center space-x-1">
