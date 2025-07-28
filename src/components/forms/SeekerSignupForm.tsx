@@ -9,15 +9,33 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { BasicCombobox } from '@/components/ui/basic-combobox';
 import { api } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
-import { useCountries } from '@/hooks/use-countries';
-import { useJobFields } from '@/hooks/use-job-fields';
+import { saveAuthData } from '@/lib/auth';
 import { Search } from 'lucide-react';
+import { useCountries } from '@/hooks/use-countries';
+
+const COUNTRIES = [
+  'United States', 'Canada', 'United Kingdom', 'Germany', 'France', 'Spain', 'Italy',
+  'Netherlands', 'Australia', 'New Zealand', 'Singapore', 'India', 'Brazil', 'Mexico'
+];
+
+const JOB_FIELDS = [
+  { value: '0', label: 'Technology' },
+  { value: '1', label: 'Healthcare' },
+  { value: '2', label: 'Finance' },
+  { value: '3', label: 'Education' },
+  { value: '4', label: 'Marketing' },
+  { value: '5', label: 'Sales' },
+  { value: '6', label: 'Engineering' },
+  { value: '7', label: 'Design' },
+  { value: '8', label: 'Operations' },
+  { value: '9', label: 'Human Resources' }
+];
 
 export const SeekerSignupForm = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const { countries, loading: loadingCountries } = useCountries();
-  const { jobFields } = useJobFields();
+  const jobFields = JOB_FIELDS;
   const [formData, setFormData] = useState({
     id: 0,
     name: '',
@@ -28,7 +46,7 @@ export const SeekerSignupForm = () => {
     dailyWorkHours: '',
     yearsOfExperience: '',
     hasDegree: false,
-    field: 0
+    field: '0'
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -86,11 +104,32 @@ export const SeekerSignupForm = () => {
         description: "Welcome! Redirecting to jobs...",
       });
 
-      // Optionally save token if returned
+      // Save full auth state if token returned
       if (response && response.token) {
+        let role: 'JobSeeker' = 'JobSeeker';
+        let userId = '';
+        let email = formData.email;
+        try {
+          const payload = JSON.parse(atob(response.token.split('.')[1]));
+          // Only allow 'JobSeeker' for signup
+          userId = payload.NameIdentifier?.toString() || payload.nameid?.toString() || '';
+          email = payload.Email || formData.email;
+        } catch {}
+        const authData = {
+          token: response.token,
+          userId,
+          role,
+          email
+        };
         localStorage.setItem('token', response.token);
+        localStorage.setItem('role', role);
+        localStorage.setItem('userId', userId);
+        localStorage.setItem('email', email);
+        // Update global auth state immediately
+        saveAuthData(authData);
+        console.log('Signed up as:', authData);
       }
-      navigate('/seeker/dashboard');
+      navigate('/seeker/dashboard', { replace: true });
     } catch (error: any) {
       if (error.status === 400) {
         // Handle validation errors from backend
